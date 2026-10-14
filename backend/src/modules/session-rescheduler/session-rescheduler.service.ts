@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '@config/prisma.service';
-import { CourseStatus, SessionStatus, SessionType } from '@prisma/client';
+import { CourseStatus, Prisma, SessionStatus, SessionType } from '@prisma/client';
 import { addAppDaysAtTimeOf, formatAppDateTime } from '@common/utils';
 import { SessionQuizGradingService } from '@modules/live-sessions/session-quiz-grading.service';
 import { SessionRemindersService } from '@modules/live-sessions/session-reminders.service';
@@ -194,7 +194,7 @@ export class SessionReschedulerService implements OnModuleInit, OnModuleDestroy 
             durationMinutes: session.durationMinutes,
             trainerId: session.trainerId, // Inherited default trainer; publisher can edit manually anytime
             allowViewAttendance: session.allowViewAttendance,
-            attendanceThreshold: session.attendanceThreshold,
+            attendanceThreshold: await this.getDefaultAttendanceThreshold(tx),
             status: SessionStatus.SCHEDULED,
             isAutoRescheduled: true,
             rescheduleStatus: 'NONE',
@@ -291,7 +291,14 @@ export class SessionReschedulerService implements OnModuleInit, OnModuleDestroy 
           where: {
             courseId,
             OR: [{ sessionPlanId: planId }, { originalPlanId: planId }],
-            status: SessionStatus.COMPLETED,
+            AND: [
+              {
+                OR: [
+                  { status: SessionStatus.COMPLETED },
+                  { sessionType: SessionType.IN_PERSON },
+                ],
+              },
+            ],
           },
           select: { id: true },
         });
@@ -403,6 +410,19 @@ export class SessionReschedulerService implements OnModuleInit, OnModuleDestroy 
     } finally {
       this.isProcessingReaper = false;
     }
+  }
+
+  private async getDefaultAttendanceThreshold(tx: Prisma.TransactionClient): Promise<number> {
+    const setting = await tx.systemSetting.findUnique({
+      where: { key: 'default_attendance_threshold' },
+    });
+    if (setting?.value) {
+      const parsed = parseInt(setting.value, 10);
+      if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
+        return parsed;
+      }
+    }
+    return 60;
   }
 }
 

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  AlertCircle,
   Building2,
   CalendarClock,
   CheckCircle2,
@@ -158,38 +159,65 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
           const Icon = badge.icon;
           const isPerson = isPersonSession(s);
           const isCheckedIn = s.attended || checkedInIds.includes(s.sessionId || s.id);
+          const isMissed = s.status === 'COMPLETED' && !s.attended;
 
           return (
-            <li key={s.id} className="rounded-2xl border border-border bg-card p-4 shadow-2xs">
-              {(s.missedRounds ?? []).length > 0 && (
-                <ul className="mb-3 space-y-1.5 border-b border-border/60 pb-3">
-                  {s.missedRounds!.map((r) => (
-                    <li key={r.sessionId} className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-sm text-muted-foreground line-through decoration-danger/60">
-                        {fmt(r.scheduledAt)}
-                        {r.durationMinutes ? ` · ${r.durationMinutes} ${t('liveSessionsStage.min')}` : ''}
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full border border-danger/30 bg-danger-soft px-2 py-0.5 text-[11px] font-semibold text-danger">
-                        <XCircle className="h-3.5 w-3.5" />
-                        {t('liveSessionsStage.notAttended')}
-                      </span>
-                    </li>
-                  ))}
-                  {s.status !== 'COMPLETED' && (
-                    <li className="text-xs font-medium text-info">{t('liveSessionsStage.attendTheNextSession')}</li>
-                  )}
-                </ul>
+            <li key={s.id} className={cn('rounded-2xl border p-4 shadow-2xs transition', isMissed ? 'border-danger/30 bg-card/60' : 'border-border bg-card')}>
+              {(s.missedRounds ?? []).length > 0 && s.status !== 'COMPLETED' && (
+                <div className="mb-3 rounded-xl border border-info/30 bg-info-soft/40 p-3 space-y-2">
+                  <div className="text-xs font-semibold text-info flex items-center gap-1.5">
+                    <Info className="h-4 w-4 text-info shrink-0" />
+                    <span>Rescheduled Makeup Session for Previously Missed Round:</span>
+                  </div>
+                  <ul className="space-y-1.5 pl-5">
+                    {s.missedRounds!.map((r) => (
+                      <li key={r.sessionId} className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span className="line-through text-muted-foreground decoration-danger/60">
+                          {fmt(r.scheduledAt)}
+                          {r.durationMinutes ? ` · ${r.durationMinutes} ${t('liveSessionsStage.min')}` : ''}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-danger/30 bg-danger-soft px-2 py-0.5 text-[10px] font-semibold text-danger">
+                          <XCircle className="h-3 w-3" />
+                          {t('liveSessionsStage.notAttended')}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-muted-foreground font-medium pt-0.5">
+                    {t('liveSessionsStage.attendTheNextSession')}
+                  </p>
+                </div>
               )}
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
                     {t('liveSessionsStage.session')} {i + 1}
                   </p>
-                  <h3 className="font-semibold text-foreground">{s.titleEn}</h3>
-                  <p className="mt-1 text-sm text-secondary-foreground">
+                  <h3
+                    className={cn(
+                      'font-semibold text-foreground',
+                      isMissed && 'line-through text-muted-foreground decoration-danger/60',
+                    )}
+                  >
+                    {s.titleEn}
+                  </h3>
+                  <p
+                    className={cn(
+                      'mt-1 text-sm text-secondary-foreground',
+                      isMissed && 'line-through text-muted-foreground decoration-danger/60',
+                    )}
+                  >
                     {s.scheduledAt ? fmt(s.scheduledAt) : t('liveSessionsStage.dateToBeAnnounced')}
                     {s.durationMinutes ? ` · ${s.durationMinutes} ${t('liveSessionsStage.min')}` : ''}
                   </p>
+                  {isMissed && (
+                    <div className="mt-2.5 rounded-xl border border-danger/30 bg-danger-soft/40 p-2.5 text-xs text-danger flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      <span>
+                        This session was missed. You must attend an upcoming rescheduled session to satisfy attendance requirements and unlock the final assessment.
+                      </span>
+                    </div>
+                  )}
                   <StartsInBadge seconds={s.startsInSeconds} className="mt-1" />
                   {s.venue && (
                     <div className="flex items-center gap-1.5 text-xs text-secondary-foreground font-medium mt-1">

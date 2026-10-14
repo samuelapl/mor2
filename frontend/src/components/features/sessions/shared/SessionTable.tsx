@@ -18,6 +18,11 @@ export interface SessionRow {
 interface SessionTableProps {
   sessions: SessionRow[];
   extra?: (row: SessionRow) => ReactNode;
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: () => void;
+  allSelected?: boolean;
 }
 
 // Session times are shown in platform time (EAT), whatever the browser's time zone.
@@ -54,25 +59,50 @@ const STATUS_META: Record<
   CANCELLED: { label: 'Cancelled', variant: 'red' },
 };
 
-export function SessionTable({ sessions, extra }: SessionTableProps) {
+export function SessionTable({
+  sessions,
+  extra,
+  selectable = false,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+  allSelected = false,
+}: SessionTableProps) {
   const sorted = [...sessions].sort((a, b) =>
     a.session.scheduledAt.localeCompare(b.session.scheduledAt),
   );
 
+  const columns = [
+    ...(selectable
+      ? [
+          {
+            name: 'select',
+            label: (
+              <input
+                type="checkbox"
+                aria-label="Select all sessions"
+                checked={allSelected}
+                onChange={onToggleSelectAll}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20 cursor-pointer align-middle"
+              />
+            ),
+            className: 'w-[40px]',
+          },
+        ]
+      : []),
+    { name: 'Schedule', className: 'w-[170px]' },
+    { name: 'Session', className: 'min-w-[180px] max-w-[240px]' },
+    { name: 'Course', className: 'min-w-[180px] max-w-[240px]' },
+    { name: 'Trainer', className: 'w-[150px]' },
+    { name: 'Status', className: 'w-[130px]' },
+    { name: 'Actions', className: 'text-right' },
+  ];
+
   return (
-    <Table
-      columns={[
-        { name: 'Schedule', className: 'w-[170px]' },
-        { name: 'Session', className: 'min-w-[180px] max-w-[240px]' },
-        { name: 'Course', className: 'min-w-[180px] max-w-[240px]' },
-        { name: 'Trainer', className: 'w-[150px]' },
-        { name: 'Status', className: 'w-[130px]' },
-        { name: 'Actions', className: 'text-right' },
-      ]}
-    >
+    <Table columns={columns}>
       {sorted.length === 0 ? (
         <tr>
-          <Td colSpan={6} className="py-12 text-center text-xs text-subtle-foreground">
+          <Td colSpan={selectable ? 7 : 6} className="py-12 text-center text-xs text-subtle-foreground">
             No sessions scheduled.
           </Td>
         </tr>
@@ -89,6 +119,17 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
 
           return (
             <TableRow key={row.session.id}>
+              {selectable && (
+                <Td className="w-[40px]">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select session ${stripHtmlTags(row.session.titleEn)}`}
+                    checked={selectedIds?.has(row.session.id) ?? false}
+                    onChange={() => onToggleSelect?.(row.session.id)}
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20 cursor-pointer align-middle"
+                  />
+                </Td>
+              )}
               {/* Schedule Column (Date, Time, Duration) */}
               <Td className="whitespace-nowrap w-[170px]">
                 <div className="flex flex-col gap-0.5">

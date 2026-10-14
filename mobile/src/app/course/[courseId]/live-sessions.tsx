@@ -89,6 +89,7 @@ export default function CourseLiveSessionsScreen() {
         ) : (
           sessions.map((s, i) => {
             const badge = status(s);
+            const isMissed = s.status === 'COMPLETED' && !s.attended;
             const joinable = (s.status === 'LIVE' || s.status === 'SCHEDULED') && s.sessionId;
             return (
               <Card key={s.id} className="gap-3">
@@ -125,10 +126,22 @@ export default function CourseLiveSessionsScreen() {
                           })
                         : t('courseSessions.sessionN', { number: i + 1 })}
                     </AppText>
-                    <AppText className="text-base font-semibold text-slate-900 dark:text-white">
+                    <AppText
+                      className={
+                        isMissed
+                          ? 'text-base font-semibold text-slate-400 line-through dark:text-slate-500'
+                          : 'text-base font-semibold text-slate-900 dark:text-white'
+                      }
+                    >
                       {s.titleEn}
                     </AppText>
-                    <AppText className="text-sm text-slate-600 dark:text-slate-300">
+                    <AppText
+                      className={
+                        isMissed
+                          ? 'text-sm text-slate-400 line-through dark:text-slate-500'
+                          : 'text-sm text-slate-600 dark:text-slate-300'
+                      }
+                    >
                       {s.scheduledAt
                         ? formatDateTime(s.scheduledAt, locale)
                         : t('courseSessions.dateTba')}
@@ -136,6 +149,16 @@ export default function CourseLiveSessionsScreen() {
                         ? ` · ${t('courses.minutes', { count: s.durationMinutes })}`
                         : ''}
                     </AppText>
+                    {isMissed ? (
+                      <View className="mt-1 rounded-lg bg-amber-50 p-2 dark:bg-amber-950/30">
+                        <AppText className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                          {t('courseSessions.missedSessionNotice', {
+                            defaultValue:
+                              'This session was missed. You must attend an upcoming rescheduled session to unlock the final assessment.',
+                          })}
+                        </AppText>
+                      </View>
+                    ) : null}
                     <StartsInBadge seconds={s.startsInSeconds} />
                     {s.venue ? (
                       <View className="flex-row items-center gap-1.5 pt-0.5">

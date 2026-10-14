@@ -11,6 +11,7 @@ describe('AttendanceService', () => {
         findUnique: jest
           .fn()
           .mockResolvedValue({ id: 's1', courseId: 'c1', status: 'LIVE', durationMinutes: 60 }),
+        findFirst: jest.fn().mockResolvedValue(null),
       },
       enrollment: { findUnique: jest.fn().mockResolvedValue({ status: 'ACTIVE' }) },
       attendance: {
@@ -45,6 +46,27 @@ describe('AttendanceService', () => {
     it('still marks present on a QR check-in at the venue', async () => {
       const record = await service.checkin('s1', 'u1', CheckInMethod.QR);
       expect(record.status).toBe(AttendanceStatus.PRESENT);
+    });
+
+    it('finds session by 6-digit PIN code when checking in', async () => {
+      prisma.liveSession.findUnique.mockResolvedValue(null);
+      prisma.liveSession.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'long-session-id-123456',
+          courseId: 'c1',
+          status: 'SCHEDULED',
+          durationMinutes: 60,
+        });
+      const record = await service.checkin('123456', 'u1', CheckInMethod.QR);
+      expect(record.status).toBe(AttendanceStatus.PRESENT);
+      expect(prisma.liveSession.findFirst).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { endsWith: '123456', mode: 'insensitive' },
+          }),
+        }),
+      );
     });
   });
 

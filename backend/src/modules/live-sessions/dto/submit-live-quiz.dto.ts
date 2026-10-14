@@ -30,4 +30,9 @@ export class SubmitLiveQuizDto {
   @IsOptional()
   @IsString()
   correctAnswer?: string;
+
+  @ApiProperty({ description: 'Question point value if customized', required: false })
+  @IsOptional()
+  @IsNumber()
+  points?: number;
 }

@@ -13,6 +13,7 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import { AppText, Badge } from '@/components/ui';
 import { useThemeColors } from '@/core/theme/colors';
 import { cn } from '@/core/utils/cn';
+import { useSessionStore } from '@/features/auth';
 
 import { useMySessionQuizResults } from '../api/live-session-api';
 import type { LearnerQuizResult, SessionQuizGroup } from '../types/live-session.types';
@@ -30,8 +31,11 @@ export function SessionQuizResults({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const [open, setOpen] = useState(defaultOpen);
+  const currentUserId = useSessionStore((s) => s.user?.id);
   const results = useMySessionQuizResults(sessionId, open);
-  const me = results.data?.learners[0];
+  const me =
+    results.data?.learners.find((l) => l.userId === currentUserId) ??
+    results.data?.learners[0];
 
   return (
     <View className="gap-3">

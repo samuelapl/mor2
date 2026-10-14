@@ -36,6 +36,8 @@ export interface ApiLiveSession {
   course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string } | null;
   trainer: ApiUserSummary | null;
   venue: ApiVenue | null;
+  attended?: boolean;
+  attendanceStatus?: string | null;
 }
 
 /** Attendance row (spec §8.5–§8.7). */

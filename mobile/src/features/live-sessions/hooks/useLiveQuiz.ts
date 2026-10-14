@@ -202,19 +202,20 @@ export function useLiveQuiz({ sessionId, userId, userName, broadcast }: UseLiveQ
     );
     for (const q of questions) {
       const selected = (answers[q.id] ?? []).filter(Boolean);
-      if (selected.length === 0) continue;
-      broadcast({
-        type: 'QUIZ_ANSWER',
-        payload: {
-          questionId: q.id,
-          userId,
-          userName,
-          selectedOptionIds: selected,
-          submittedAt: Date.now(),
-          responseDurationSeconds: elapsed,
-          allAnswers: answers,
-        },
-      });
+      if (selected.length > 0) {
+        broadcast({
+          type: 'QUIZ_ANSWER',
+          payload: {
+            questionId: q.id,
+            userId,
+            userName,
+            selectedOptionIds: selected,
+            submittedAt: Date.now(),
+            responseDurationSeconds: elapsed,
+            allAnswers: answers,
+          },
+        });
+      }
       enqueueLiveQuizResponse({
         sessionId,
         questionId: q.id,

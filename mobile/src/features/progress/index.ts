@@ -24,4 +24,4 @@ export {
 } from './utils/find-lesson-progress';
 export { findNextLesson, type NextLesson } from './utils/next-lesson';
 export { requiredSeconds } from './utils/required-seconds';
-export { CourseGradeSummary } from './components/CourseGradeSummary';
+export { CourseGradeSummary, missingLiveSessions } from './components/CourseGradeSummary';

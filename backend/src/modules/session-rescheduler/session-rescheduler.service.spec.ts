@@ -48,6 +48,7 @@ describe('SessionReschedulerService.handleSessionEnded with a session quiz', () 
         upsert: jest.fn(() => calls.push('move-quiz')),
         create: jest.fn(),
       },
+      systemSetting: { findUnique: jest.fn().mockResolvedValue(null) },
     };
     prisma = {
       liveSession: {

@@ -21,6 +21,7 @@ export interface LiveQuizPayload {
   correctOptionIds?: string[];
   explanationEn?: string;
   explanationAm?: string;
+  points?: number;
   questionIndex?: number;
   totalQuestions?: number;
   allQuestions?: LiveQuizPayload[];

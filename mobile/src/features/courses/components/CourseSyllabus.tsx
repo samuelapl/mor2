@@ -19,11 +19,12 @@ import { AppText, Badge, Card, LockBadge, ProgressBar } from '@/components/ui';
 import { useLocalized } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
 import { cn } from '@/core/utils/cn';
-import type {
-  CourseProgress,
-  LessonProgress,
-  ProgressAssessment,
-  SubLessonProgress,
+import {
+  type CourseProgress,
+  type LessonProgress,
+  missingLiveSessions,
+  type ProgressAssessment,
+  type SubLessonProgress,
 } from '@/features/progress';
 import type { ApiCertificate } from '@/features/certificates';
 
@@ -138,8 +139,12 @@ export function CourseSyllabus({
           label={t('courses.finalAssessment')}
           assessment={finalAssessment}
           progress={finalProgress}
-          // Final eligibility is enforced on start (spec §7.3); show it open once content is done.
-          unlocked={course.enrolled && (progress?.courseCompletion.contentCompleted ?? false)}
+          // Final eligibility is enforced on start (spec §7.3); show it open once content is done and all live sessions are attended.
+          unlocked={
+            course.enrolled &&
+            (progress?.courseCompletion.contentCompleted ?? false) &&
+            missingLiveSessions(progress).length === 0
+          }
           onPress={() => onOpenAssessment(finalAssessment.id)}
         />
       ) : null}
@@ -513,7 +518,7 @@ function LiveSessionsRow({
       {isInPerson && sessions.length > 0 ? (
         <View className="gap-1.5 border-t border-sky-200/60 pt-2.5 dark:border-sky-800/60">
           {sessions.map((s, idx) => {
-            const isAttended = s.attended || s.status === 'COMPLETED';
+            const isAttended = Boolean(s.attended);
             const canCheckIn = (s.status === 'LIVE' || s.status === 'SCHEDULED') && !isAttended && s.sessionId;
 
             return (

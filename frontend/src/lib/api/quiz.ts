@@ -137,7 +137,7 @@ export async function submitAttempt(
 ): Promise<GradedResult> {
   return api<GradedResult>(`assessments/${assessmentId}/submit`, {
     method: 'POST',
-    body: { answers, isAuto },
+    body: isAuto ? { answers, isAuto } : { answers },
   });
 }
 

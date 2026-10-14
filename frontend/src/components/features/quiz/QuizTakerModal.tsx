@@ -634,20 +634,15 @@ export function QuizTakerModal({
               className={cn(
                 'rounded-2xl border p-4 shadow-sm transition',
                 isAnswered
-                  ? 'border-border/80 bg-card'
-                  : 'border-warning/70 bg-card',
+                  ? 'border-primary/40 bg-card'
+                  : 'border-border/80 bg-card',
               )}
             >
-              <div className="flex items-start justify-between gap-2 text-sm font-semibold text-foreground">
-                <div className="flex items-start gap-2 min-w-0">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-[11px] font-bold text-white shadow-sm">
-                    {index + 1}
-                  </span>
-                  <RichContent html={question.question} inline inheritText className="min-w-0" />
-                </div>
-                <span className="shrink-0 text-[11px] font-medium text-danger">
-                  * Required
+              <div className="flex items-start gap-2 text-sm font-semibold text-foreground">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-[11px] font-bold text-white shadow-sm">
+                  {index + 1}
                 </span>
+                <RichContent html={question.question} inline inheritText className="min-w-0" />
               </div>
 
               {question.imageUrl ? (
@@ -710,8 +705,8 @@ export function QuizTakerModal({
                 {answeredCount}/{assessment.questions.length} answered
               </p>
               {answeredCount < assessment.questions.length ? (
-                <p className="text-[10px] font-medium text-danger">
-                  All questions are required ({assessment.questions.length - answeredCount} remaining)
+                <p className="text-[10px] font-medium text-muted-foreground">
+                  {assessment.questions.length - answeredCount} remaining
                 </p>
               ) : (
                 <p className="text-[10px] font-medium text-success">All questions answered</p>

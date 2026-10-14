@@ -1,4 +1,4 @@
-import { AttendanceStatus, Prisma, PrismaClient, SessionStatus } from '@prisma/client';
+import { AttendanceStatus, Prisma, PrismaClient, SessionStatus, SessionType } from '@prisma/client';
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -8,6 +8,7 @@ export interface AttendanceSession {
   id: string;
   titleEn: string;
   status: string;
+  sessionType?: SessionType | string;
   sessionPlanId: string | null;
   /** Set when the plan moved on to a newer session (rescheduled, or this one was removed). */
   originalPlanId: string | null;
@@ -32,6 +33,19 @@ function nextRoundAt(sessions: AttendanceSession[], matches: (s: AttendanceSessi
 }
 
 /**
+ * In-person attendance is verified via physical check-in (QR code, GPS, biometrics)
+ * or trainer roll-call, so it counts immediately even if the scheduled session record was never marked COMPLETED.
+ * Online / virtual sessions must be concluded (COMPLETED).
+ */
+export function isSessionAttended(s: AttendanceSession): boolean {
+  if (!s.attended) return false;
+  if (s.sessionType === SessionType.IN_PERSON || s.sessionType === 'IN_PERSON') {
+    return true;
+  }
+  return s.status === SessionStatus.COMPLETED;
+}
+
+/**
  * Live-session attendance a learner still owes, shared by the final-assessment gate and
  * certificate issuing so the two can never disagree:
  *
@@ -49,7 +63,7 @@ export function missingSessionAttendance(
   if (plans.length > 0) {
     const attendedPlanIds = new Set(
       sessions
-        .filter((s) => s.status === SessionStatus.COMPLETED && s.attended)
+        .filter((s) => isSessionAttended(s))
         .map((s) => s.originalPlanId ?? s.sessionPlanId)
         .filter(Boolean),
     );
@@ -63,8 +77,10 @@ export function missingSessionAttendance(
   }
 
   if (!hasOnlineSessions && sessions.length === 0) return [];
-  const completed = sessions.filter((s) => s.status === SessionStatus.COMPLETED);
-  if (completed.length === 0) {
+  const completedOrAttended = sessions.filter(
+    (s) => s.status === SessionStatus.COMPLETED || isSessionAttended(s),
+  );
+  if (completedOrAttended.length === 0) {
     // Required sessions have not been held yet.
     return sessions.length > 0
       ? sessions.map((s) => ({
@@ -75,8 +91,8 @@ export function missingSessionAttendance(
       : [{ id: 'online-sessions', title: 'Online sessions', nextSessionAt: null }];
   }
   // Ad-hoc sessions are not rescheduled, so a missed one has no next round.
-  return completed
-    .filter((s) => !s.attended)
+  return completedOrAttended
+    .filter((s) => !isSessionAttended(s))
     .map((s) => ({ id: s.id, title: s.titleEn, nextSessionAt: null }));
 }
 
@@ -102,7 +118,10 @@ export async function findMissingSessionAttendance(
   userId: string,
 ): Promise<MissingSession[]> {
   const [course, plans, sessions] = await Promise.all([
-    db.course.findUnique({ where: { id: courseId }, select: { hasOnlineSessions: true } }),
+    db.course.findUnique({
+      where: { id: courseId },
+      select: { hasOnlineSessions: true, deliveryMode: true },
+    }),
     db.courseSessionPlan.findMany({
       where: { courseId },
       orderBy: { order: 'asc' },
@@ -114,6 +133,7 @@ export async function findMissingSessionAttendance(
         id: true,
         titleEn: true,
         status: true,
+        sessionType: true,
         scheduledAt: true,
         sessionPlanId: true,
         originalPlanId: true,
@@ -126,9 +146,15 @@ export async function findMissingSessionAttendance(
     }),
   ]);
 
+  const isInPersonCourse = course?.deliveryMode === 'IN_PERSON_ONLY';
+
   return missingSessionAttendance(
     plans,
-    sessions.map(({ attendees, ...s }) => ({ ...s, attended: attendees.length > 0 })),
+    sessions.map(({ attendees, sessionType, ...s }) => ({
+      ...s,
+      sessionType: isInPersonCourse ? SessionType.IN_PERSON : sessionType,
+      attended: attendees.length > 0,
+    })),
     course?.hasOnlineSessions ?? false,
   );
 }

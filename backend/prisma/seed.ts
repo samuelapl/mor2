@@ -6,6 +6,7 @@ import { seedLaws } from './seed-laws';
 import { seedVenues } from './seed-venues';
 import { seedUsers } from './seed-users';
 import { seedCourses } from './seed-courses';
+import { seedQuestionBank } from './seed-question-bank';
 
 const prisma = new PrismaClient();
 
@@ -69,6 +70,10 @@ async function main() {
   // 6. Comprehensive Courses (Clean ONLINE_ONLY and IN_PERSON_ONLY including VAT101 & VAT102)
   console.log('\n📚 Step 7: Seeding Courses, Curriculum & Scheduled Sessions...');
   await seedCourses(prisma, users, venues);
+
+  // 7. Question Bank (VAT101 & VAT102 Course & Lesson level questions)
+  console.log('\n❓ Step 8: Seeding Question Bank for VAT Courses...');
+  await seedQuestionBank(prisma);
 
   console.log('\n──────────────────────────────────────────────────────────');
   console.log('🎉 Clean Database Seed Completed Successfully!');

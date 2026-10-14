@@ -196,7 +196,8 @@ export class LiveSessionsService {
           durationMinutes: dto.durationMinutes,
           trainerId: dto.trainerId || null,
           allowViewAttendance: dto.allowViewAttendance ?? false,
-          attendanceThreshold: dto.attendanceThreshold ?? 60,
+          attendanceThreshold:
+            dto.attendanceThreshold ?? (await this.getDefaultAttendanceThreshold()),
         },
         include: {
           course: { select: { id: true, title: true, code: true } },
@@ -736,14 +737,29 @@ export class LiveSessionsService {
             select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
           },
           venue: true,
+          attendees: {
+            where: { userId: user.id },
+            select: { status: true, checkInMethod: true },
+            take: 1,
+          },
         },
       }),
       this.prisma.liveSession.count({ where }),
     ]);
 
     const now = new Date();
+    const ATTENDED_STATUSES = ['PRESENT', 'LATE'];
     return buildPaginatedResponse(
-      sessions.map((s) => ({ ...s, startsInSeconds: startsInSeconds(s, now) })),
+      sessions.map((s) => {
+        const attendee = s.attendees?.[0];
+        const attended = attendee ? ATTENDED_STATUSES.includes(attendee.status) : false;
+        return {
+          ...s,
+          attended,
+          attendanceStatus: attendee?.status ?? null,
+          startsInSeconds: startsInSeconds(s, now),
+        };
+      }),
       total,
       page,
       limit,
@@ -780,6 +796,10 @@ export class LiveSessionsService {
     let isCorrect = false;
     let score = 0;
     const explanation = undefined;
+    const effectivePoints =
+      typeof dto.points === 'number' && dto.points > 0
+        ? dto.points
+        : 1;
 
     if (question) {
       // The key may be stored as an option position or as its text; apps send positions.
@@ -790,7 +810,16 @@ export class LiveSessionsService {
         },
         dto.selectedOptionIds,
       );
-      score = isCorrect ? question.points : 0;
+      score = isCorrect ? effectivePoints : 0;
+    } else if (dto.correctAnswer !== undefined) {
+      isCorrect = isAnswerCorrect(
+        {
+          options: Array.isArray(dto.options) ? dto.options : [],
+          correctAnswer: dto.correctAnswer,
+        },
+        dto.selectedOptionIds,
+      );
+      score = isCorrect ? effectivePoints : 0;
     }
 
     // Create an immutable log entry in attendanceLog for audit & performance records
@@ -813,6 +842,7 @@ export class LiveSessionsService {
           selectedOptionIds: dto.selectedOptionIds,
           isCorrect,
           score,
+          points: effectivePoints,
           responseDurationSeconds: dto.responseDurationSeconds,
         },
       },
@@ -1016,5 +1046,18 @@ export class LiveSessionsService {
       questions,
       learners,
     };
+  }
+
+  private async getDefaultAttendanceThreshold(): Promise<number> {
+    const setting = await this.prisma.systemSetting.findUnique({
+      where: { key: 'default_attendance_threshold' },
+    });
+    if (setting?.value) {
+      const parsed = parseInt(setting.value, 10);
+      if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
+        return parsed;
+      }
+    }
+    return 60;
   }
 }

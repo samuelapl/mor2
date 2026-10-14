@@ -853,6 +853,8 @@ export interface ApiLiveSession {
   } | null;
   course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string };
   attendees?: ApiAttendance[];
+  attended?: boolean;
+  attendanceStatus?: string | null;
   /** Active enrollments holding a seat (in-person); present on list responses. */
   bookedSeats?: number;
 }

@@ -10,6 +10,6 @@ export function missingLiveSessions(progress?: ApiCourseProgress | null): ApiMis
   const missing = progress.courseCompletion?.missingSessions;
   if (missing) return missing;
   return (progress.liveSessions ?? [])
-    .filter((s) => s.status !== 'COMPLETED' || !s.attended)
+    .filter((s) => !s.attended)
     .map((s) => ({ id: s.id, title: s.titleEn, nextSessionAt: s.status === 'COMPLETED' ? null : s.scheduledAt }));
 }

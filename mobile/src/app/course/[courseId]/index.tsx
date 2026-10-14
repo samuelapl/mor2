@@ -39,8 +39,10 @@ import {
   Screen,
   Skeleton,
 } from '@/components/ui';
-import { useLocalized } from '@/core/i18n';
+import { useLocalized, useLocaleStore } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
+import { formatCourseDuration } from '@/core/utils/formatters';
+import { LessonBody } from '@/features/classroom/components/LessonBody';
 import { FormMessage, useFormError, useSessionStore } from '@/features/auth';
 import { CourseFeedbackModal, hasSkippedFeedback, hasSubmittedFeedback } from '@/features/feedback';
 import {
@@ -61,6 +63,7 @@ export default function CourseScreen() {
   const { t } = useTranslation();
   const localized = useLocalized();
   const colors = useThemeColors();
+  const locale = useLocaleStore((s) => s.locale);
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
 
   const course = useCourse(courseId);
@@ -298,7 +301,7 @@ export default function CourseScreen() {
               <View className="flex-row items-center gap-1">
                 <Clock size={14} color={colors.textMuted} />
                 <AppText variant="caption">
-                  {t('courses.hours', { count: data.estimatedHours })}
+                  {formatCourseDuration(data.estimatedHours, locale)}
                 </AppText>
               </View>
             ) : null}
@@ -469,9 +472,9 @@ export default function CourseScreen() {
                       {t('courses.objectives')}
                     </AppText>
                   </View>
-                  <AppText className="text-[15px] font-normal leading-6 text-slate-700 dark:text-slate-300">
-                    {objectives}
-                  </AppText>
+                  <View className="pt-1">
+                    <LessonBody content={objectives} />
+                  </View>
                 </View>
               ) : null}
 
@@ -696,9 +699,9 @@ export default function CourseScreen() {
                     {t('courses.objectives')}
                   </AppText>
                 </View>
-                <AppText className="text-sm leading-6 text-slate-700 dark:text-slate-300">
-                  {objectives}
-                </AppText>
+                <View className="pt-1">
+                  <LessonBody content={objectives} />
+                </View>
               </View>
             ) : null}
 

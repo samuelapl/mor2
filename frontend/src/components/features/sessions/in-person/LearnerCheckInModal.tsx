@@ -57,14 +57,17 @@ export function LearnerCheckInModal({
   const handleCheckIn = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    if (pin.trim() && pin.trim().toUpperCase() !== expectedPin) {
-      toast.error(`Invalid PIN code. Please verify the 6-digit code shown on the classroom screen.`);
+    const trimmedPin = pin.trim().toUpperCase();
+    if (trimmedPin && trimmedPin.length !== 6) {
+      toast.error(`Please enter a valid 6-character PIN code shown on the classroom screen.`);
       return;
     }
 
     setSubmitting(true);
     try {
-      await selfCheckIn(session.id, "QR");
+      // If PIN is entered and doesn't match this session.id, send the PIN so backend resolves the matching session
+      const targetSessionId = trimmedPin && trimmedPin !== expectedPin ? trimmedPin : session.id;
+      await selfCheckIn(targetSessionId, "QR");
       setSuccess(true);
       toast.success("Attendance successfully confirmed! You are marked as PRESENT.");
       if (onSuccess) onSuccess();

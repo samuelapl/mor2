@@ -245,7 +245,7 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         moduleId: 'final',
         moduleIndex: 9998,
         unlocked: true,
-        completed: liveSessions.every((s) => s.status === 'COMPLETED'),
+        completed: liveSessions.length > 0 && liveSessions.every((s) => s.attended === true),
       });
     }
 

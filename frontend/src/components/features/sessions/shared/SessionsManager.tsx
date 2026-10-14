@@ -100,6 +100,9 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
   const [activeJoinSession, setActiveJoinSession] = useState<ApiLiveSession | null>(null);
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
   const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(null);
+  const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -250,6 +253,60 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
     }
   };
 
+  const canDelete = canManageAll || (scope === "own" && canConductSession);
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedSessionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = (sessionList: ApiLiveSession[]) => {
+    const listIds = sessionList.map((s) => s.id);
+    const allSelected = listIds.length > 0 && listIds.every((id) => selectedSessionIds.has(id));
+    setSelectedSessionIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        listIds.forEach((id) => next.delete(id));
+      } else {
+        listIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedSessionIds.size === 0) return;
+    setIsBulkDeleting(true);
+    const ids = Array.from(selectedSessionIds);
+    let successCount = 0;
+    let failCount = 0;
+    try {
+      for (const id of ids) {
+        try {
+          await deleteLiveSession(id);
+          successCount++;
+        } catch {
+          failCount++;
+        }
+      }
+      if (successCount > 0) {
+        toast.success(`Successfully deleted ${successCount} session${successCount > 1 ? "s" : ""}.`);
+      }
+      if (failCount > 0) {
+        toast.error(`Failed to delete ${failCount} session${failCount > 1 ? "s" : ""}.`);
+      }
+      setSelectedSessionIds(new Set());
+      setBulkDeleteOpen(false);
+      void fetchSessions();
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   const hasActiveFilters = searchQuery !== "" || selectedCourseFilter !== "ALL" || selectedStatusFilter !== "ALL";
 
   const scheduleButton = (size?: "sm") => (
@@ -393,6 +450,41 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
         </div>
       </div>
 
+      {canDelete && selectedSessionIds.size > 0 && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-danger/30 bg-danger-soft/40 px-4 py-2.5 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-danger">
+              {selectedSessionIds.size} session{selectedSessionIds.size > 1 ? "s" : ""} selected
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedSessionIds(new Set())}
+              className="text-xs text-muted-foreground hover:underline"
+            >
+              Deselect all
+            </button>
+            {selectedSessionIds.size < filteredSessions.length && (
+              <button
+                type="button"
+                onClick={() => setSelectedSessionIds(new Set(filteredSessions.map((s) => s.id)))}
+                className="text-xs text-primary font-medium hover:underline"
+              >
+                Select all {filteredSessions.length} sessions
+              </button>
+            )}
+          </div>
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => setBulkDeleteOpen(true)}
+            className="gap-1.5 h-8 text-xs font-semibold"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete Selected ({selectedSessionIds.size})
+          </Button>
+        </div>
+      )}
+
       <div className="space-y-8">
         {!loading && selectedStatusFilter === "ALL" && upcoming.length === 0 && past.length === 0 ? (
           <EmptyState
@@ -423,6 +515,16 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
               <>
                 <SessionTable
                   sessions={upcomingRows.pageItems}
+                  selectable={canDelete}
+                  selectedIds={selectedSessionIds}
+                  onToggleSelect={handleToggleSelect}
+                  onToggleSelectAll={() =>
+                    handleToggleSelectAll(upcomingRows.pageItems.map((r) => r.session))
+                  }
+                  allSelected={
+                    upcomingRows.pageItems.length > 0 &&
+                    upcomingRows.pageItems.every((r) => selectedSessionIds.has(r.session.id))
+                  }
                   extra={(row) => (
                     <div className="flex items-center justify-end gap-1.5">
                       {managementButtons(row.session)}
@@ -532,6 +634,16 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
               <>
                 <SessionTable
                   sessions={pastRows.pageItems}
+                  selectable={canDelete}
+                  selectedIds={selectedSessionIds}
+                  onToggleSelect={handleToggleSelect}
+                  onToggleSelectAll={() =>
+                    handleToggleSelectAll(pastRows.pageItems.map((r) => r.session))
+                  }
+                  allSelected={
+                    pastRows.pageItems.length > 0 &&
+                    pastRows.pageItems.every((r) => selectedSessionIds.has(r.session.id))
+                  }
                   extra={(row) => (
                     <div className="flex items-center justify-end gap-1.5">
                       {managementButtons(row.session)}
@@ -660,6 +772,26 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
         confirmText="Delete Session"
         variant="danger"
         isLoading={Boolean(deletingId)}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <ConfirmModal
+        open={bulkDeleteOpen}
+        onClose={() => !isBulkDeleting && setBulkDeleteOpen(false)}
+        onConfirm={() => void confirmBulkDelete()}
+        title="Delete Selected Sessions"
+        description={
+          <>
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-foreground">
+              {selectedSessionIds.size} selected session{selectedSessionIds.size > 1 ? "s" : ""}
+            </span>
+            ? This will revoke scheduled room links for all enrolled learners. Planned sessions will return to unscheduled state and can be rescheduled.
+          </>
+        }
+        confirmText={`Delete ${selectedSessionIds.size} Session${selectedSessionIds.size > 1 ? "s" : ""}`}
+        variant="danger"
+        isLoading={isBulkDeleting}
       />
     </PageShell>
   );

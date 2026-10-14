@@ -11,11 +11,12 @@ import { formatDateTime } from '@/core/utils/formatters';
 import type { CourseProgress, MissingSession } from '../types/progress.types';
 
 /** Live sessions still to attend: the server's list, or (older servers) the unattended sessions. */
-function missingLiveSessions(progress: CourseProgress): MissingSession[] {
-  const missing = progress.courseCompletion.missingSessions;
+export function missingLiveSessions(progress?: CourseProgress | null): MissingSession[] {
+  if (!progress) return [];
+  const missing = progress.courseCompletion?.missingSessions;
   if (missing) return missing;
   return (progress.liveSessions ?? [])
-    .filter((s) => s.status !== 'COMPLETED' || !s.attended)
+    .filter((s) => !s.attended)
     .map((s) => ({
       id: s.id,
       title: s.titleEn,

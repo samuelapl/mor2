@@ -146,7 +146,6 @@ export class SessionQuizResultsService {
       where: {
         sessionId,
         eventType: 'QUIZ_RESPONSE',
-        ...(onlyUserId ? { userId: onlyUserId } : {}),
       },
       orderBy: { timestamp: 'asc' },
       select: { userId: true, timestamp: true, metadata: true },
@@ -158,9 +157,10 @@ export class SessionQuizResultsService {
     for (const log of logs) {
       const meta = (log.metadata ?? {}) as QuizResponseMeta;
       if (!meta.questionId) continue;
+      if (!metaByQuestion.has(meta.questionId)) metaByQuestion.set(meta.questionId, meta);
+      if (onlyUserId && log.userId !== onlyUserId) continue;
       if (!latest.has(log.userId)) latest.set(log.userId, new Map());
       latest.get(log.userId)!.set(meta.questionId, { meta, at: log.timestamp });
-      if (!metaByQuestion.has(meta.questionId)) metaByQuestion.set(meta.questionId, meta);
     }
 
     // Empty groups (prepared but never given questions) have no results to show.
@@ -273,7 +273,7 @@ export class SessionQuizResultsService {
             question: q?.question ?? meta.questionTitle ?? 'Live question',
             options,
             correctAnswer: asText(q?.correctAnswer ?? meta.correctAnswer, options),
-            points: q?.points ?? 1,
+            points: (meta as any).points ?? 1,
           };
         }),
       });

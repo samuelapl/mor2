@@ -4,8 +4,9 @@ import { View } from 'react-native';
 
 import { AppText, Badge, Card, ProgressBar } from '@/components/ui';
 import type { EnrollmentStatus } from '@/core/api/types';
-import { useLocalized } from '@/core/i18n';
+import { useLocalized, useLocaleStore } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
+import { formatCourseDuration } from '@/core/utils/formatters';
 
 import type { ApiCourse } from '../types/course.types';
 import { CourseThumbnail } from './CourseThumbnail';
@@ -29,6 +30,7 @@ export function CourseCard({
   const { t } = useTranslation();
   const localized = useLocalized();
   const colors = useThemeColors();
+  const locale = useLocaleStore((s) => s.locale);
 
   return (
     <Card onPress={onPress} className="overflow-hidden p-0">
@@ -57,7 +59,7 @@ export function CourseCard({
             <View className="flex-row items-center gap-1">
               <Clock size={14} color={colors.textMuted} />
               <AppText variant="caption">
-                {t('courses.hours', { count: course.estimatedHours })}
+                {formatCourseDuration(course.estimatedHours, locale)}
               </AppText>
             </View>
           ) : null}

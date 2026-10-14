@@ -28,6 +28,7 @@ export function SessionCard({
   return (
     <Card onPress={onPress} className="gap-2">
       <View className="flex-row flex-wrap items-center gap-2">
+        {session.attended ? <Badge label={t('sessions.attended', { defaultValue: 'Attended' })} tone="success" /> : null}
         {session.status === 'LIVE' ? <Badge label={t('sessions.live')} tone="live" /> : null}
         <Badge
           label={inPerson ? t('sessions.inPerson') : t('sessions.online')}
@@ -79,9 +80,14 @@ export function SessionCard({
           ) : null}
           <View className="flex-1">
             <Button
-              title={t('sessions.checkIn', { defaultValue: 'Check-In' })}
+              title={
+                session.attended
+                  ? t('sessions.attended', { defaultValue: 'Attended' })
+                  : t('sessions.checkIn', { defaultValue: 'Check-In' })
+              }
               size="sm"
-              variant="primary"
+              variant={session.attended ? 'outline' : 'primary'}
+              disabled={Boolean(session.attended)}
               onPress={() =>
                 router.push({
                   pathname: '/session/[sessionId]/check-in',

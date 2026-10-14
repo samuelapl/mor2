@@ -252,7 +252,11 @@ export default function LearnerLiveSessionsPage() {
           <SessionTable
             sessions={pageItems}
             extra={(row) => {
-              const isCheckedIn = joined.includes(row.session.id);
+              const isCheckedIn =
+                Boolean(row.session.attended) ||
+                (row.session as any).attendanceStatus === 'PRESENT' ||
+                (row.session as any).attendanceStatus === 'LATE' ||
+                joined.includes(row.session.id);
               const isLoading = loadingJoinId === row.session.id;
               const isPerson = isInPersonSession(row.session);
 

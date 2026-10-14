@@ -42,7 +42,7 @@ describe('missingSessionAttendance with planned sessions', () => {
     ]);
   });
 
-  it('does not count attendance of a session that has not been completed', () => {
+  it('does not count attendance of a virtual session that has not been completed', () => {
     const sessions = [
       session({ id: 's1', status: 'LIVE', sessionPlanId: 'p1', attended: true }),
       session({ id: 's2', sessionPlanId: 'p2', attended: true }),
@@ -50,6 +50,46 @@ describe('missingSessionAttendance with planned sessions', () => {
     expect(missingSessionAttendance(plans, sessions, true)).toEqual([
       { id: 'p1', title: 'Session 1', nextSessionAt: null },
     ]);
+  });
+
+  it('counts attendance of an in-person session even if status is SCHEDULED or LIVE', () => {
+    const sessions = [
+      session({
+        id: 's1',
+        status: 'SCHEDULED',
+        sessionType: 'IN_PERSON',
+        sessionPlanId: 'p1',
+        attended: true,
+      }),
+      session({
+        id: 's2',
+        status: 'SCHEDULED',
+        sessionType: 'IN_PERSON',
+        sessionPlanId: 'p2',
+        attended: true,
+      }),
+    ];
+    expect(missingSessionAttendance(plans, sessions, true)).toEqual([]);
+  });
+
+  it('counts attendance of an in-person session with originalPlanId even if status is SCHEDULED', () => {
+    const sessions = [
+      session({
+        id: 's1',
+        status: 'SCHEDULED',
+        sessionType: 'IN_PERSON',
+        originalPlanId: 'p1',
+        attended: true,
+      }),
+      session({
+        id: 's2',
+        status: 'SCHEDULED',
+        sessionType: 'IN_PERSON',
+        originalPlanId: 'p2',
+        attended: true,
+      }),
+    ];
+    expect(missingSessionAttendance(plans, sessions, true)).toEqual([]);
   });
 
   it('gives the earliest upcoming round of a missed plan as the next session', () => {
@@ -107,6 +147,13 @@ describe('missingSessionAttendance without plans', () => {
       missingSessionAttendance([], [session({ id: 'a', status: 'SCHEDULED' })], true),
     ).toHaveLength(1);
     expect(missingSessionAttendance([], [], true)).toHaveLength(1);
+  });
+
+  it('counts attendance of an in-person session without plans even if status is SCHEDULED', () => {
+    const sessions = [
+      session({ id: 'a', status: 'SCHEDULED', sessionType: 'IN_PERSON', attended: true }),
+    ];
+    expect(missingSessionAttendance([], sessions, true)).toEqual([]);
   });
 });
 

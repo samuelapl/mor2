@@ -15,14 +15,25 @@ export class AttendanceService {
   ) {}
 
   private async getSessionOrFail(sessionId: string) {
-    let session = await this.prisma.liveSession.findUnique({ where: { id: sessionId } });
+    const cleanId = (sessionId || '').trim();
+    let session = await this.prisma.liveSession.findUnique({ where: { id: cleanId } });
     if (!session || session.deletedAt) {
       session = await this.prisma.liveSession.findFirst({
         where: {
-          OR: [{ originalPlanId: sessionId }, { sessionPlanId: sessionId }],
+          OR: [{ originalPlanId: cleanId }, { sessionPlanId: cleanId }],
           deletedAt: null,
           status: { in: [SessionStatus.SCHEDULED, SessionStatus.LIVE] },
         },
+      });
+    }
+    if ((!session || session.deletedAt) && cleanId.length === 6) {
+      session = await this.prisma.liveSession.findFirst({
+        where: {
+          id: { endsWith: cleanId, mode: 'insensitive' },
+          deletedAt: null,
+          status: { in: [SessionStatus.SCHEDULED, SessionStatus.LIVE] },
+        },
+        orderBy: { scheduledAt: 'asc' },
       });
     }
     if (!session || session.deletedAt) {
@@ -421,7 +432,7 @@ export class AttendanceService {
 
   async recordHeartbeat(sessionId: string, userId: string, elapsedSeconds = 15) {
     const session = await this.getSessionOrFail(sessionId);
-    const sessionTotalSeconds = (session.durationMinutes ?? 60) * 60;
+    const scheduledSeconds = (session.durationMinutes ?? 60) * 60;
     const threshold = await this.getDefaultAttendanceThreshold();
 
     const existing = await this.prisma.attendance.findUnique({
@@ -430,14 +441,39 @@ export class AttendanceService {
 
     const addSeconds = Math.max(1, Math.min(120, elapsedSeconds));
     const newActiveSeconds = (existing?.activeSeconds ?? 0) + addSeconds;
+
+    // Elapsed live time: calculate against actual broadcast time when session is LIVE or ended early
+    const now = new Date();
+    const liveStart = session.actualStartedAt ?? session.scheduledAt;
+    const elapsedLiveSeconds = liveStart
+      ? Math.max(1, Math.round((now.getTime() - new Date(liveStart).getTime()) / 1000))
+      : scheduledSeconds;
+
+    // Total session duration against which threshold percentage is required
+    const effectiveSessionSeconds =
+      session.status === SessionStatus.COMPLETED && session.actualEndedAt && session.actualStartedAt
+        ? Math.min(
+            scheduledSeconds,
+            Math.max(
+              1,
+              Math.round(
+                (new Date(session.actualEndedAt).getTime() -
+                  new Date(session.actualStartedAt).getTime()) /
+                  1000,
+              ),
+            ),
+          )
+        : Math.max(1, scheduledSeconds);
+
     const rawPercentage =
-      sessionTotalSeconds > 0 ? (newActiveSeconds / sessionTotalSeconds) * 100 : 0;
+      effectiveSessionSeconds > 0 ? (newActiveSeconds / effectiveSessionSeconds) * 100 : 0;
     const percentage = Math.min(100, Math.round(rawPercentage));
 
-    const newStatus =
-      percentage >= threshold
-        ? AttendanceStatus.PRESENT
-        : (existing?.status ?? AttendanceStatus.ABSENT);
+    const isQualified = percentage >= threshold;
+
+    const newStatus = isQualified
+      ? AttendanceStatus.PRESENT
+      : (existing?.status ?? AttendanceStatus.ABSENT);
 
     let updated;
     try {

@@ -357,18 +357,19 @@ function LiveQuizLearnerOverlayContent({
             allAnswers: answersMap,
           },
         });
-
-        submitLiveSessionQuizResponse(sessionId, {
-          questionId: q.id,
-          selectedOptionIds: selectedOpts,
-          responseDurationSeconds: elapsed,
-          questionTitle: q.titleEn,
-          options: (q.options || []).map((o: any) =>
-            typeof o === 'string' ? o : o.textEn || o.text || '',
-          ),
-          correctAnswer: q.correctOptionIds?.[0] || (q as any).correctAnswer,
-        }).catch((err) => console.warn('Could not log live quiz answer:', err));
       }
+
+      submitLiveSessionQuizResponse(sessionId, {
+        questionId: q.id,
+        selectedOptionIds: selectedOpts || [],
+        responseDurationSeconds: elapsed,
+        questionTitle: q.titleEn,
+        options: (q.options || []).map((o: any) =>
+          typeof o === 'string' ? o : o.textEn || o.text || '',
+        ),
+        correctAnswer: q.correctOptionIds?.[0] || (q as any).correctAnswer,
+        points: q.points,
+      }).catch((err) => console.warn('Could not log live quiz answer:', err));
     }
 
     setIsQuizSubmitted(true);

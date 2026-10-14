@@ -446,7 +446,7 @@ export class ProgressService {
       }),
       this.prisma.enrollment.findUnique({
         where: { userId_courseId: { userId, courseId } },
-        select: { enrolledAt: true },
+        select: { enrolledAt: true, venueId: true, sessionId: true, deliveryMode: true },
       }),
     ]);
 
@@ -487,66 +487,111 @@ export class ProgressService {
           durationMinutes: s.durationMinutes,
         }));
 
-    // If the learner is enrolled in specific sessions/round (has Attendance rows),
-    // return all sessions they are registered for in chronological order!
-    const enrolledSessions = sessions.filter((s) => s.attendees.length > 0);
-    if (enrolledSessions.length > 0) {
-      return enrolledSessions.map((s) => {
-        const planId = s.sessionPlanId ?? s.originalPlanId;
-        return {
-          ...toInfo(s, planId),
-          missedRounds: planId ? missedRoundsOf(planId, s.id) : [],
-        };
-      });
-    }
-
     const byId = new Map(sessions.map((s) => [s.id, s]));
-    const planned = plans.map((p): LearnerSessionInfo => {
-      // 1. Check if learner already attended any completed session for this specific plan
-      const attendedPrior = sessions.find(
-        (s) =>
-          (s.sessionPlanId === p.id || s.originalPlanId === p.id) &&
-          s.status === 'COMPLETED' &&
-          s.attendees.some((a) => a.status === 'PRESENT' || a.status === 'LATE'),
-      );
-      if (attendedPrior) {
-        return {
-          ...toInfo(attendedPrior, p.id),
-          missedRounds: missedRoundsOf(p.id, attendedPrior.id),
-        };
-      }
 
-      // 2. Otherwise return the learner's enrolled Round session (if any) or current active/upcoming session for this plan
-      const enrolledRoundSession = sessions.find(
-        (s) =>
-          (s.sessionPlanId === p.id || s.originalPlanId === p.id) &&
-          s.attendees.length > 0,
-      );
-      const live =
-        enrolledRoundSession ??
-        (p.liveSession && !p.liveSession.deletedAt ? byId.get(p.liveSession.id) : undefined) ??
-        sessions.find((s) => s.sessionPlanId === p.id || s.originalPlanId === p.id);
-      return live
-        ? { ...toInfo(live, p.id), missedRounds: missedRoundsOf(p.id, live.id) }
-        : {
-            id: p.id,
-            sessionId: null,
-            titleEn: p.titleEn,
-            scheduledAt: null,
-            durationMinutes: null,
-            platform: null,
-            trainerName: null,
-            status: 'TO_BE_SCHEDULED',
-            attended: false,
-            planned: true,
-            startsInSeconds: null,
-            missedRounds: missedRoundsOf(p.id, null),
+    if (plans.length > 0) {
+      const planned = plans.map((p): LearnerSessionInfo => {
+        // 1. Check if learner already attended any completed or in-person session for this specific plan
+        const attendedPrior = sessions.find(
+          (s) =>
+            (s.sessionPlanId === p.id || s.originalPlanId === p.id) &&
+            (s.status === 'COMPLETED' || s.sessionType === 'IN_PERSON') &&
+            attendedRound(s),
+        );
+        if (attendedPrior) {
+          return {
+            ...toInfo(attendedPrior, p.id),
+            missedRounds: missedRoundsOf(p.id, attendedPrior.id),
           };
-    });
-    const extra = sessions
-      .filter((s) => !s.sessionPlanId && !s.originalPlanId)
-      .map((s) => toInfo(s, null));
-    return [...planned, ...extra];
+        }
+
+        // 2. Return the active or upcoming session for this plan (prioritizing the learner's booked session or enrolled venue)
+        const activeOrUpcoming =
+          (enrollment?.sessionId
+            ? sessions.find(
+                (s) =>
+                  s.id === enrollment.sessionId &&
+                  (s.sessionPlanId === p.id || s.originalPlanId === p.id) &&
+                  (s.status === 'LIVE' || s.status === 'SCHEDULED'),
+              )
+            : undefined) ??
+          (enrollment?.venueId
+            ? sessions.find(
+                (s) =>
+                  s.venueId === enrollment.venueId &&
+                  (s.sessionPlanId === p.id || s.originalPlanId === p.id) &&
+                  (s.status === 'LIVE' || s.status === 'SCHEDULED'),
+              )
+            : undefined) ??
+          sessions.find(
+            (s) =>
+              (s.sessionPlanId === p.id || s.originalPlanId === p.id) &&
+              (s.status === 'LIVE' || s.status === 'SCHEDULED'),
+          );
+        if (activeOrUpcoming) {
+          return {
+            ...toInfo(activeOrUpcoming, p.id),
+            missedRounds: missedRoundsOf(p.id, activeOrUpcoming.id),
+          };
+        }
+
+        // 3. If learner missed a completed round and no upcoming round has been scheduled yet
+        const missedSession = sessions.find(
+          (s) =>
+            (s.sessionPlanId === p.id || s.originalPlanId === p.id) &&
+            s.status === 'COMPLETED' &&
+            !attendedRound(s),
+        );
+        if (missedSession) {
+          return {
+            ...toInfo(missedSession, p.id),
+            missedRounds: [
+              {
+                sessionId: missedSession.id,
+                scheduledAt: missedSession.scheduledAt.toISOString(),
+                durationMinutes: missedSession.durationMinutes,
+              },
+            ],
+          };
+        }
+
+        // 4. Fallback to attached liveSession or TO_BE_SCHEDULED placeholder
+        const fallback =
+          (enrollment?.venueId
+            ? sessions.find(
+                (s) =>
+                  s.venueId === enrollment.venueId &&
+                  (s.sessionPlanId === p.id || s.originalPlanId === p.id),
+              )
+            : undefined) ??
+          (p.liveSession && !p.liveSession.deletedAt ? byId.get(p.liveSession.id) : undefined) ??
+          sessions.find((s) => s.sessionPlanId === p.id || s.originalPlanId === p.id);
+
+        return fallback
+          ? { ...toInfo(fallback, p.id), missedRounds: missedRoundsOf(p.id, fallback.id) }
+          : {
+              id: p.id,
+              sessionId: null,
+              titleEn: p.titleEn,
+              scheduledAt: null,
+              durationMinutes: null,
+              platform: null,
+              trainerName: null,
+              status: 'TO_BE_SCHEDULED',
+              attended: false,
+              planned: true,
+              startsInSeconds: null,
+              missedRounds: missedRoundsOf(p.id, null),
+            };
+      });
+
+      const extra = sessions
+        .filter((s) => !s.sessionPlanId && !s.originalPlanId)
+        .filter((s) => !enrollment?.venueId || s.venueId === enrollment.venueId || attendedRound(s))
+        .map((s) => toInfo(s, null));
+      return [...planned, ...extra];
+    }
+    return sessions.map((s) => toInfo(s, null));
   }
 
   /**

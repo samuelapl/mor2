@@ -35,34 +35,43 @@ export default function CheckInScreen() {
   const scanned = useRef(false);
   const [locating, setLocating] = useState(false);
 
-  const submit = (method: CheckInMethod, coords?: { latitude: number; longitude: number }) =>
+  const submit = (
+    method: CheckInMethod,
+    targetIdOrCoords?: string | { latitude: number; longitude: number },
+    coords?: { latitude: number; longitude: number },
+  ) => {
+    const targetSessionId = typeof targetIdOrCoords === 'string' ? targetIdOrCoords : sessionId;
+    const finalCoords = typeof targetIdOrCoords === 'object' ? targetIdOrCoords : coords;
     checkIn.mutate(
-      { sessionId, method, ...coords },
+      { sessionId: targetSessionId, method, ...finalCoords },
       // Let the scanner try again after a failed attempt.
       { onError: () => (scanned.current = false) },
     );
+  };
 
   const submitPin = () => {
-    if (!isValidPin(sessionId, pin)) {
+    const trimmedPin = pin.trim().toUpperCase();
+    if (!isValidPin(sessionId, pin) && trimmedPin.length !== 6) {
       setPinError(t('sessions.pinInvalid'));
       return;
     }
     setPinError(null);
+    const targetId = isValidPin(sessionId, pin) ? sessionId : trimmedPin;
     // Same as the web app: a verified classroom PIN is recorded as a QR check-in.
-    submit('QR');
+    submit('QR', targetId);
   };
 
   const onScan = ({ data }: { data: string }) => {
     if (scanned.current || checkIn.isPending) return;
     scanned.current = true;
     const scannedSession = sessionIdFromQr(data);
-    if (scannedSession !== sessionId) {
+    if (!scannedSession) {
       Alert.alert(t('sessions.qrMismatchTitle'), t('sessions.qrMismatch'), [
         { text: t('common.ok'), onPress: () => (scanned.current = false) },
       ]);
       return;
     }
-    submit('QR');
+    submit('QR', scannedSession);
   };
 
   const checkInWithGps = async () => {

@@ -45,6 +45,7 @@ import {
   History,
   Tag,
   Send,
+  Scale,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
@@ -58,6 +59,7 @@ import type { ApiModule, ApiLesson } from '@/lib/api/types';
 import type { LiveKitDataEvent, LiveQuizOption, LiveQuizPayload } from '@/types/livekit-events';
 import { PreparedQuizPanel } from '@/components/features/prepared-quiz/PreparedQuizPanel';
 import type { PreparedQuizGroup } from '@/lib/api/prepared-quiz';
+import { splitEvenly } from '@/components/features/prepared-quiz/quiz-points';
 import { usePreparedQuizStore } from '@/lib/stores/prepared-quiz-store';
 import { useLookupCategories } from '@/lib/api/useLookupCategories';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -236,12 +238,20 @@ export function LiveQuizTrainerControl({
   const [customTitleAm, setCustomTitleAm] = useState('');
   const [customOptions, setCustomOptions] = useState<string[]>(['', '', '', '']);
   const [correctOptionIdx, setCorrectOptionIdx] = useState<number>(0);
+  const [customPoints, setCustomPoints] = useState<number>(1);
   const [customExplanation, setCustomExplanation] = useState('');
   const [customTargetModuleId, setCustomTargetModuleId] = useState<string>('NONE');
   const [customTargetLessonId, setCustomTargetLessonId] = useState<string>('NONE');
   const [customTargetSubLessonId, setCustomTargetSubLessonId] = useState<string>('NONE');
   const [customAddedSuccess, setCustomAddedSuccess] = useState<string | null>(null);
   const [saveToQuestionBank, setSaveToQuestionBank] = useState<boolean>(false);
+
+  // Batch total points allocation state
+  const [targetBatchTotal, setTargetBatchTotal] = useState<number>(100);
+  const stagedTotalPoints = useMemo(
+    () => stagedQueue.reduce((acc, q) => acc + (q.points ?? 1), 0),
+    [stagedQueue],
+  );
 
   // Timer settings (in minutes for entire sequenced quiz, just like prepared quiz)
   const [timerMinutes, setTimerMinutes] = useState<number>(3);
@@ -263,7 +273,7 @@ export function LiveQuizTrainerControl({
               question: q.titleEn,
               options: rawOpts,
               correctAnswer: q.correctOptionIds?.[0] || '0',
-              points: 10,
+              points: typeof (q as any).points === 'number' && (q as any).points > 0 ? (q as any).points : 1,
               category: 'General',
               createdAt: new Date(q.startedAt).toISOString(),
               updatedAt: new Date(q.startedAt).toISOString(),
@@ -282,7 +292,7 @@ export function LiveQuizTrainerControl({
           question: activeQuiz.titleEn,
           options: activeQuiz.options.map((opt) => opt.textEn),
           correctAnswer: activeQuiz.correctOptionIds?.[0] || '0',
-          points: 10,
+          points: typeof (activeQuiz as any).points === 'number' && (activeQuiz as any).points > 0 ? (activeQuiz as any).points : 1,
           category: 'General',
           createdAt: new Date(activeQuiz.startedAt).toISOString(),
           updatedAt: new Date(activeQuiz.startedAt).toISOString(),
@@ -589,22 +599,7 @@ export function LiveQuizTrainerControl({
     activeLessonSubLessons,
   ]);
 
-  // Compute live distribution
-  const totalResponses = Object.keys(answers).length;
-  const distribution: Record<string, number> = {};
-
-  if (activeQuiz) {
-    activeQuiz.options.forEach((opt) => {
-      distribution[opt.id] = 0;
-    });
-    Object.values(answers).forEach((ans) => {
-      ans.selectedOptionIds.forEach((optId) => {
-        if (distribution[optId] !== undefined) {
-          distribution[optId]++;
-        }
-      });
-    });
-  }
+  // Live distribution & total responses are computed below displayedQuiz (supporting both single & sequenced questions)
 
   // All questions in current active quiz pack
   const allQuizPackQuestions = useMemo(() => {
@@ -1451,6 +1446,7 @@ export function LiveQuizTrainerControl({
       correctOptionIds,
       explanationEn: (q as any).explanation || (q as any).explanationEn || undefined,
       explanationAm: (q as any).explanationAm || undefined,
+      points: typeof (q as any).points === 'number' && (q as any).points > 0 ? (q as any).points : 1,
     };
   };
 
@@ -1656,6 +1652,59 @@ export function LiveQuizTrainerControl({
     return activeQuiz;
   }, [currentStagedQ, activeQuiz, buildQuizPayload]);
 
+  // Real-time vote distribution & response count for active/displayed quiz
+  const currentViewingQuiz = displayedQuiz || activeQuiz;
+
+  const distribution: Record<string, number> = useMemo(() => {
+    const dist: Record<string, number> = {};
+    if (!currentViewingQuiz) return dist;
+
+    // Initialize all options
+    currentViewingQuiz.options.forEach((opt) => {
+      dist[opt.id] = 0;
+    });
+
+    Object.values(answers || {}).forEach((ans: any) => {
+      const rawSelections =
+        ans.allAnswers?.[currentViewingQuiz.id] ??
+        (ans.questionId === currentViewingQuiz.id || !ans.allAnswers
+          ? ans.selectedOptionIds
+          : undefined);
+
+      if (!rawSelections || !Array.isArray(rawSelections)) return;
+
+      rawSelections.forEach((sel: any) => {
+        const selStr = String(sel).trim();
+        const matched = currentViewingQuiz.options.find(
+          (o, idx) =>
+            o.id === selStr ||
+            String(idx) === selStr ||
+            stripHtmlTags(o.textEn).trim().toLowerCase() === selStr.toLowerCase() ||
+            o.textEn.trim().toLowerCase() === selStr.toLowerCase(),
+        );
+        if (matched) {
+          dist[matched.id] = (dist[matched.id] || 0) + 1;
+        } else if (dist[selStr] !== undefined) {
+          dist[selStr]++;
+        }
+      });
+    });
+
+    return dist;
+  }, [currentViewingQuiz, answers]);
+
+  const totalResponses = useMemo(() => {
+    if (!currentViewingQuiz) return 0;
+    return Object.values(answers || {}).filter((ans: any) => {
+      const rawSelections =
+        ans.allAnswers?.[currentViewingQuiz.id] ??
+        (ans.questionId === currentViewingQuiz.id || !ans.allAnswers
+          ? ans.selectedOptionIds
+          : undefined);
+      return Array.isArray(rawSelections) && rawSelections.length > 0;
+    }).length;
+  }, [currentViewingQuiz, answers]);
+
   // Active countdown timer calculation
   useEffect(() => {
     if (!activeQuiz) {
@@ -1805,7 +1854,11 @@ export function LiveQuizTrainerControl({
     if (inQueue) {
       updated = stagedQueue.filter((item) => item.id !== q.id);
     } else {
-      updated = [...stagedQueue, q];
+      const qWithPoint: ApiQuestionBankQuestion = {
+        ...q,
+        points: 1,
+      };
+      updated = [...stagedQueue, qWithPoint];
       if (updated.length > questionAmount) {
         setQuestionAmount(updated.length);
       }
@@ -1850,7 +1903,7 @@ export function LiveQuizTrainerControl({
           question: customTitleEn.trim(),
           options: validOptions,
           correctAnswer: String(correctOptionIdx),
-          points: 10,
+          points: customPoints || 10,
           category: 'Live Assessment',
           explanation: customExplanation.trim() || undefined,
           // Don't hold up a live session over similar questions; identical ones are still refused.
@@ -1874,7 +1927,7 @@ export function LiveQuizTrainerControl({
       question: customTitleEn.trim(),
       options: validOptions,
       correctAnswer: String(correctOptionIdx),
-      points: 10,
+      points: customPoints || 10,
       category: 'Live Assessment',
       explanation: customExplanation.trim() || undefined,
       courseId,
@@ -1954,7 +2007,7 @@ export function LiveQuizTrainerControl({
           question: customTitleEn.trim(),
           options: validOptions,
           correctAnswer: String(correctOptionIdx),
-          points: 10,
+          points: customPoints || 10,
           category: 'Live Assessment',
           explanation: customExplanation.trim() || undefined,
           // Don't hold up a live session over similar questions; identical ones are still refused.
@@ -1985,6 +2038,7 @@ export function LiveQuizTrainerControl({
       trainerName,
       correctOptionIds: [String(correctOptionIdx)],
       explanationEn: customExplanation.trim() || undefined,
+      points: customPoints || 10,
     };
 
     onBroadcast({
@@ -3932,6 +3986,42 @@ export function LiveQuizTrainerControl({
                       )}
                     </div>
 
+                    {/* Points Allocation Bar */}
+                    <div className="flex items-center justify-between gap-3 pt-2 border-t border-primary/30 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                          <Scale className="h-3.5 w-3.5 text-primary" />
+                          Total Points:
+                          <span className="font-mono text-primary font-extrabold">{stagedTotalPoints} pts</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-muted-foreground">Target Total:</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={500}
+                          value={targetBatchTotal}
+                          onChange={(e) => setTargetBatchTotal(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                          className="w-16 rounded-lg border border-primary/30 bg-card px-2 py-1 text-xs text-center font-bold text-foreground outline-none focus:ring-2 focus:ring-primary/20 shadow-2xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (stagedQueue.length === 0) return;
+                            const split = splitEvenly(targetBatchTotal, stagedQueue.length);
+                            const updated = stagedQueue.map((item, i) => ({ ...item, points: split[i] }));
+                            setStagedQueue(updated);
+                            toast.success(`Allocated ${targetBatchTotal} pts across ${stagedQueue.length} questions`);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition shadow-xs"
+                        >
+                          <Scale className="h-3 w-3" />
+                          Split evenly
+                        </button>
+                      </div>
+                    </div>
+
                     {/* Staged Question items with Review Details, Edit, and Delete */}
                     <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                       {stagedQueue.map((q, idx) => {
@@ -4008,6 +4098,24 @@ export function LiveQuizTrainerControl({
                                     Course General
                                   </span>
                                 )}
+                              </div>
+
+                              {/* Points Input for Question */}
+                              <div className="flex items-center gap-1 bg-secondary/80 border border-border px-2 py-0.5 rounded-lg text-xs font-medium shrink-0">
+                                <span className="text-[10px] uppercase font-bold text-muted-foreground">Pts:</span>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={200}
+                                  value={q.points ?? 1}
+                                  onChange={(e) => {
+                                    const val = Math.max(1, parseInt(e.target.value, 10) || 1);
+                                    const updated = stagedQueue.map((item, i) => (i === idx ? { ...item, points: val } : item));
+                                    setStagedQueue(updated);
+                                  }}
+                                  className="w-11 text-center font-bold text-xs bg-card border border-border rounded py-0.5 text-foreground outline-none focus:ring-1 focus:ring-primary shadow-2xs"
+                                  title="Adjust points for this question"
+                                />
                               </div>
 
                               {/* Action Buttons: Details / Review, Edit, Delete */}
@@ -5028,35 +5136,51 @@ export function LiveQuizTrainerControl({
                       )}
                     </div>
 
-                    {/* Question Type Selector based on DB Lookup Categories */}
-                    <div>
-                      <label className="text-xs font-semibold text-secondary-foreground block mb-1">
-                        Question Type
-                      </label>
-                      <select
-                        value={customQuestionType}
-                        onChange={(e) => {
-                          const newType = e.target.value;
-                          setCustomQuestionType(newType);
-                          if (newType === 'TRUE_FALSE') {
-                            setCustomOptions(['True', 'False']);
-                            setCorrectOptionIdx(0);
-                          } else if (newType === 'SHORT_ANSWER') {
-                            setCustomOptions(['']);
-                            setCorrectOptionIdx(0);
-                          } else {
-                            setCustomOptions(['', '', '', '']);
-                            setCorrectOptionIdx(0);
-                          }
-                        }}
-                        className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs font-medium"
-                      >
-                        {questionTypeOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
+                    {/* Question Type Selector & Points */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-secondary-foreground block mb-1">
+                          Question Type
+                        </label>
+                        <select
+                          value={customQuestionType}
+                          onChange={(e) => {
+                            const newType = e.target.value;
+                            setCustomQuestionType(newType);
+                            if (newType === 'TRUE_FALSE') {
+                              setCustomOptions(['True', 'False']);
+                              setCorrectOptionIdx(0);
+                            } else if (newType === 'SHORT_ANSWER') {
+                              setCustomOptions(['']);
+                              setCorrectOptionIdx(0);
+                            } else {
+                              setCustomOptions(['', '', '', '']);
+                              setCorrectOptionIdx(0);
+                            }
+                          }}
+                          className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs font-medium"
+                        >
+                          {questionTypeOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-secondary-foreground block mb-1">
+                          Points (Weight)
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={200}
+                          value={customPoints}
+                          onChange={(e) => setCustomPoints(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                          className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs"
+                        />
+                      </div>
                     </div>
 
                     {/* Question Texts */}
