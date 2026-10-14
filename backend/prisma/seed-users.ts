@@ -9,6 +9,7 @@ export interface SeededUsers {
   trainingAdmin2: User;
   courseOwner: User;
   courseOwner2: User;
+  samuelUser: User;
   approver: User;
   approver2: User;
   trainer: User;
@@ -338,6 +339,7 @@ export async function seedUsers(prisma: PrismaClient, venues: SeededVenues): Pro
     trainingAdmin2,
     courseOwner,
     courseOwner2,
+    samuelUser: samuel1,
     approver,
     approver2,
     trainer: onlineTrainer1,

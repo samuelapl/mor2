@@ -26,12 +26,14 @@ export async function seedCourses(
 ): Promise<void> {
   console.log('📚 Seeding Clean Courses (ONLINE_ONLY and IN_PERSON_ONLY)...');
 
-  const ownerId = users.courseOwner.id;
+  const defaultOwnerId = users.courseOwner.id;
+  const samuelOwnerId = users.samuelUser.id;
+  const ownerId = defaultOwnerId;
   const approverId = users.approver.id;
   const onlineTrainer = users.onlineTrainers[0];
 
   // Helper for creating attachments
-  async function addCourseAttachment(courseId: string, title: string) {
+  async function addCourseAttachment(courseId: string, title: string, uploaderId: string = defaultOwnerId) {
     await prisma.attachment.create({
       data: {
         courseId,
@@ -40,7 +42,7 @@ export async function seedCourses(
         fileUrl: PDF_FILE_URL,
         fileType: 'application/pdf',
         sizeBytes: PDF_SIZE_BYTES,
-        uploadedById: ownerId,
+        uploadedById: uploaderId,
       },
     });
   }
@@ -66,7 +68,7 @@ export async function seedCourses(
       status: CourseStatus.PUBLISHED,
       publishedAt: new Date(),
       thumbnailUrl: COVER,
-      owners: { create: [{ userId: ownerId }] },
+      owners: { create: [{ userId: samuelOwnerId }] },
       trainers: { create: [{ userId: onlineTrainer.id }] },
       approvals: {
         create: [
@@ -80,7 +82,7 @@ export async function seedCourses(
       },
     },
   });
-  await addCourseAttachment(vat101.id, "VAT101");
+  await addCourseAttachment(vat101.id, "VAT101", samuelOwnerId);
 
   // Curriculum for VAT101
   const vat101M1 = await prisma.curriculumModule.create({
@@ -213,7 +215,7 @@ export async function seedCourses(
       status: CourseStatus.PUBLISHED,
       publishedAt: new Date(),
       thumbnailUrl: COVER,
-      owners: { create: [{ userId: ownerId }] },
+      owners: { create: [{ userId: samuelOwnerId }] },
       trainers: { create: [{ userId: users.branchTrainers["Adama Branch Office"][0].id }] },
       approvals: {
         create: [
@@ -227,7 +229,7 @@ export async function seedCourses(
       },
     },
   });
-  await addCourseAttachment(vat102.id, "VAT102");
+  await addCourseAttachment(vat102.id, "VAT102", samuelOwnerId);
 
   // VAT102 Modules
   const vat102M1 = await prisma.curriculumModule.create({

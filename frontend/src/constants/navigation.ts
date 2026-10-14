@@ -266,6 +266,54 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       permission: COURSE_LIST_PERMISSIONS,
     },
     {
+      label: 'Sessions',
+      icon: Presentation,
+      children: [
+        {
+          label: 'All Sessions',
+          href: '/training-admin/sessions',
+          icon: Presentation,
+          permission: ['live_session.manage_all'],
+        },
+        {
+          label: 'My Sessions',
+          href: '/trainer/sessions',
+          icon: CalendarDays,
+          permission: ['live_session.manage_own', 'live_session.manage_all'],
+        },
+      ],
+    },
+    {
+      label: 'Enrollments',
+      href: '/training-admin/enrollments',
+      icon: Users,
+      permission: ['student.manage', 'student.view', 'enrollment.view_all'],
+    },
+    {
+      label: 'Attendance',
+      href: '/trainer/attendance',
+      icon: ClipboardCheck,
+      permission: ['attendance.view', 'attendance.manage', 'attendance.override'],
+    },
+    {
+      label: 'Roles & Permissions',
+      href: '/system-admin/roles',
+      icon: Lock,
+      permission: ['role.manage', 'permission.manage'],
+    },
+    {
+      label: 'Users & Roles',
+      href: '/system-admin/users',
+      icon: Users,
+      permission: ['user.manage', 'user.view'],
+    },
+    {
+      label: 'Policies',
+      href: '/system-admin/policies',
+      icon: SlidersHorizontal,
+      permission: 'course_policy.manage',
+    },
+    {
       label: 'Registration',
       icon: UserPlus,
       children: [
@@ -288,6 +336,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       href: '/system-admin/pending-course-approvals',
       icon: Hourglass,
       permission: 'course.approve_reject',
+    },
+    {
+      label: 'Venues & Facilities',
+      href: '/training-admin/venues',
+      icon: Building2,
+      permission: 'venue.manage',
     },
     {
       label: 'Certificates',
@@ -320,28 +374,16 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       permission: ['feedback.manage', 'feedback.view'],
     },
     {
-      label: 'Users & Roles',
-      href: '/system-admin/users',
-      icon: Users,
-      permission: ['user.manage', 'user.view'],
+      label: 'Categories',
+      href: '/system-admin/categories',
+      icon: Tags,
+      permission: 'category.manage',
     },
     {
-      label: 'Roles & Permissions',
-      href: '/system-admin/roles',
-      icon: Lock,
-      permission: ['role.manage', 'permission.manage'],
-    },
-    {
-      label: 'Policies',
-      href: '/system-admin/policies',
-      icon: SlidersHorizontal,
-      permission: 'course_policy.manage',
-    },
-    {
-      label: 'Venues & Facilities',
-      href: '/training-admin/venues',
-      icon: Building2,
-      permission: 'venue.manage',
+      label: 'Tax & Customs Laws',
+      href: '/laws-management',
+      icon: Scale,
+      permission: 'laws.manage',
     },
     {
       label: 'System Settings',
@@ -354,18 +396,6 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       href: '/system-admin/audit-logs',
       icon: ScrollText,
       permission: 'audit.view',
-    },
-    {
-      label: 'Categories',
-      href: '/system-admin/categories',
-      icon: Tags,
-      permission: 'category.manage',
-    },
-    {
-      label: 'Tax & Customs Laws',
-      href: '/laws-management',
-      icon: Scale,
-      permission: 'laws.manage',
     },
     {
       label: 'Landing Page CMS',
