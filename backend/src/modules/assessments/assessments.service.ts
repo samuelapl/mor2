@@ -45,6 +45,20 @@ const assessmentInclude = {
   attachments: { orderBy: { createdAt: 'asc' } },
 } satisfies Prisma.AssessmentInclude;
 
+function getAssessmentInclude(isLearner = false, currentUserId?: string): Prisma.AssessmentInclude {
+  return {
+    attempts: isLearner
+      ? currentUserId
+        ? { where: { userId: currentUserId }, orderBy: { createdAt: 'asc' } }
+        : false
+      : { orderBy: { createdAt: 'asc' } },
+    course: { select: { id: true, title: true } },
+    module: { select: { id: true, title: true } },
+    lesson: { select: { id: true, title: true } },
+    attachments: { orderBy: { createdAt: 'asc' } },
+  };
+}
+
 @Injectable()
 export class AssessmentsService {
   constructor(
@@ -108,43 +122,48 @@ export class AssessmentsService {
   /*  Listing                                                            */
   /* ------------------------------------------------------------------ */
 
-  async findByCourse(courseId: string, isLearner = false) {
+  async findByCourse(courseId: string, isLearner = false, currentUserId?: string) {
     const assessments = await this.prisma.assessment.findMany({
       where: { courseId },
       orderBy: { createdAt: 'asc' },
-      include: assessmentInclude,
+      include: getAssessmentInclude(isLearner, currentUserId),
     });
 
     return isLearner ? assessments.map((a) => this.stripAnswers(a)) : assessments;
   }
 
-  async findByModule(moduleId: string, isLearner = false) {
+  async findByModule(moduleId: string, isLearner = false, currentUserId?: string) {
     const assessments = await this.prisma.assessment.findMany({
       where: { moduleId, type: AssessmentType.MODULE_ASSESSMENT },
       orderBy: { createdAt: 'asc' },
-      include: assessmentInclude,
+      include: getAssessmentInclude(isLearner, currentUserId),
     });
 
     return isLearner ? assessments.map((a) => this.stripAnswers(a)) : assessments;
   }
 
-  async findByLesson(lessonId: string, isLearner = false) {
+  async findByLesson(lessonId: string, isLearner = false, currentUserId?: string) {
     const assessments = await this.prisma.assessment.findMany({
       where: {
         lessonId,
         type: AssessmentType.LESSON_ASSESSMENT,
       },
       orderBy: { createdAt: 'asc' },
-      include: assessmentInclude,
+      include: getAssessmentInclude(isLearner, currentUserId),
     });
 
     return isLearner ? assessments.map((a) => this.stripAnswers(a)) : assessments;
   }
 
-  async findById(id: string, includeAnswers = false) {
+  async findById(
+    id: string,
+    includeAnswers = false,
+    isLearner = false,
+    currentUserId?: string,
+  ) {
     const assessment = await this.prisma.assessment.findUnique({
       where: { id },
-      include: assessmentInclude,
+      include: getAssessmentInclude(isLearner, currentUserId),
     });
 
     if (!assessment) {
@@ -615,6 +634,7 @@ export class AssessmentsService {
           const saved = Array.isArray(pending.answers) ? pending.answers : [];
           await this.submit(assessmentId, userId, {
             answers: saved as Array<Record<string, unknown>>,
+            isAuto: true,
           });
           await this.assertRetakeAllowed(assessmentId, userId, assessment.maxAttempts);
         } else {
@@ -717,9 +737,33 @@ export class AssessmentsService {
 
   async submit(assessmentId: string, userId: string, dto: SubmitAssessmentDto) {
     const assessment = await this.findById(assessmentId, true);
-    const questions = assessment.questions as unknown as GradableQuestion[];
+    await this.assertEnrolled(assessment.courseId, userId);
+
+    const questions = (assessment.questions as unknown as GradableQuestion[]) || [];
     const assessmentCourseId = assessment.courseId;
     const isFinal = assessment.type === AssessmentType.FINAL_ASSESSMENT;
+
+    // Enforce that all questions are required: learner cannot submit without answering all questions
+    // This is strictly enforced for manual submissions, but bypassed if timer has expired (isAuto)
+    if (!dto.isAuto) {
+      const submittedQuestionIds = new Set(
+        (Array.isArray(dto.answers) ? dto.answers : [])
+          .filter(
+            (a) =>
+              a?.questionId &&
+              a?.selectedOption !== undefined &&
+              a?.selectedOption !== null &&
+              a?.selectedOption !== '',
+          )
+          .map((a) => a.questionId),
+      );
+      const unanswered = questions.filter((q) => !submittedQuestionIds.has(q.id));
+      if (unanswered.length > 0) {
+        throw new BadRequestException(
+          `All questions are required. Please answer all ${questions.length} questions before submitting (${unanswered.length} unanswered).`,
+        );
+      }
+    }
 
     const pending = await this.prisma.assessmentAttempt.findFirst({
       where: { assessmentId, userId, submittedAt: null },

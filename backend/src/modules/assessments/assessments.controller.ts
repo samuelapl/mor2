@@ -24,7 +24,7 @@ export class AssessmentsController {
   @ApiParam({ name: 'courseId', type: String })
   async findByCourse(@Param('courseId') courseId: string, @CurrentUser() user: AuthenticatedUser) {
     const isLearner = user.roles.includes(RoleName.LEARNER);
-    return this.assessmentsService.findByCourse(courseId, isLearner);
+    return this.assessmentsService.findByCourse(courseId, isLearner, user.id);
   }
 
   @Post('courses/:courseId/assessments')
@@ -56,7 +56,7 @@ export class AssessmentsController {
   @ApiParam({ name: 'moduleId', type: String })
   async findByModule(@Param('moduleId') moduleId: string, @CurrentUser() user: AuthenticatedUser) {
     const isLearner = user.roles.includes(RoleName.LEARNER);
-    return this.assessmentsService.findByModule(moduleId, isLearner);
+    return this.assessmentsService.findByModule(moduleId, isLearner, user.id);
   }
 
   @Post('courses/:courseId/modules/:moduleId/assessments')
@@ -80,7 +80,7 @@ export class AssessmentsController {
   @ApiParam({ name: 'lessonId', type: String })
   async findByLesson(@Param('lessonId') lessonId: string, @CurrentUser() user: AuthenticatedUser) {
     const isLearner = user.roles.includes(RoleName.LEARNER);
-    return this.assessmentsService.findByLesson(lessonId, isLearner);
+    return this.assessmentsService.findByLesson(lessonId, isLearner, user.id);
   }
 
   @Post('courses/:courseId/modules/:moduleId/lessons/:lessonId/assessments')
@@ -118,7 +118,7 @@ export class AssessmentsController {
   ) {
     const isLearner = user.roles.includes(RoleName.LEARNER);
     const withAnswers = !isLearner && includeAnswers === 'true';
-    return this.assessmentsService.findById(id, withAnswers);
+    return this.assessmentsService.findById(id, withAnswers, isLearner, user.id);
   }
 
   @Patch('assessments/:id')

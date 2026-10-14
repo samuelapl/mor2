@@ -157,7 +157,6 @@ export class LiveSessionsController {
   }
 
   @Get('live-sessions/:id')
-  @Public()
   @ApiOperation({ summary: 'Get live session details' })
   @ApiParam({ name: 'id', type: String })
   async findOne(@Param('id') id: string) {
@@ -166,12 +165,9 @@ export class LiveSessionsController {
   }
 
   @Get('live-sessions/:id/join-url')
-  @Public()
-  @ApiOperation({ summary: 'Get resolved join URL — no authentication required' })
+  @ApiOperation({ summary: 'Get resolved join URL for authenticated attendee' })
   @ApiParam({ name: 'id', type: String })
-  async getJoinUrl(@Param('id') id: string, @Request() req: any) {
-    // User may be undefined if not authenticated — guests still get the join URL
-    const user: AuthenticatedUser | undefined = req?.user;
+  async getJoinUrl(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.liveSessionsService.getJoinUrl(id, user);
   }
 

@@ -19,11 +19,20 @@ describe('gradeAnswers', () => {
 
   it('handles unknown questions as incorrect', () => {
     const graded = gradeAnswers(questions, [{ questionId: 'nope', selectedOption: 1 }]);
-    expect(graded[0].isCorrect).toBe(false);
+    expect(graded.every((g) => !g.isCorrect)).toBe(true);
   });
 
-  it('handles empty answers', () => {
-    expect(gradeAnswers(questions, [])).toEqual([]);
+  it('handles empty answers safely without marking them correct', () => {
+    const graded = gradeAnswers(questions, []);
+    expect(graded.length).toBe(questions.length);
+    expect(graded.every((g) => !g.isCorrect)).toBe(true);
+  });
+
+  it('prevents vulnerability where empty objects get 100%', () => {
+    const maliciousEmptyAnswers: RawAnswer[] = [{}, {}, {}];
+    const graded = gradeAnswers(questions, maliciousEmptyAnswers);
+    expect(graded.length).toBe(questions.length);
+    expect(graded.every((g) => !g.isCorrect)).toBe(true);
   });
 });
 

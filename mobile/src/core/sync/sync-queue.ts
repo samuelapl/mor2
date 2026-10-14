@@ -81,14 +81,14 @@ export const syncQueue = {
     if (!onlineManager.isOnline()) return Promise.resolve();
 
     flushing = (async () => {
-      let items = load();
-      for (const item of [...items]) {
+      const items = load();
+      for (const item of items) {
         const handler = handlers.get(item.type);
         if (!handler) continue; // handler not registered yet — keep for later
 
         try {
           await handler.send(item.payload);
-          items = items.filter((i) => i.id !== item.id);
+          save(load().filter((i) => i.id !== item.id));
         } catch (error) {
           const apiError = error instanceof ApiError ? error : null;
           if (apiError?.isNetworkError) break; // offline again — stop and keep order
@@ -96,10 +96,11 @@ export const syncQueue = {
           item.attempts += 1;
           const permanent = apiError && apiError.status >= 400 && apiError.status < 500;
           if (permanent || item.attempts >= MAX_ATTEMPTS) {
-            items = items.filter((i) => i.id !== item.id);
+            save(load().filter((i) => i.id !== item.id));
+          } else {
+            save(load().map((i) => (i.id === item.id ? { ...i, attempts: item.attempts } : i)));
           }
         }
-        save(items);
       }
     })().finally(() => {
       flushing = null;
