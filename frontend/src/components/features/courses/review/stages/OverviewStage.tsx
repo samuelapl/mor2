@@ -275,14 +275,14 @@ function RichBlock({ label, html, missing, tone }: { label: string; html?: strin
     <div className="space-y-3 border-t border-border/60 pt-6">
       <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
       {hasContent ? (
-        <div
+        <RichContent
           className={
             tone === 'blue'
               ? // Info accent on the edge only; body text stays in text colour so it reads in both themes.
                 'prose prose-sm max-w-none rounded-xl border border-border/60 border-l-4 border-l-info bg-info-soft/40 px-5 py-4 text-sm leading-relaxed text-foreground'
               : 'prose prose-sm max-w-none rounded-xl border border-border/60 bg-muted/40 px-5 py-4 text-sm leading-relaxed text-secondary-foreground'
           }
-          dangerouslySetInnerHTML={{ __html: html! }}
+          html={html!}
         />
       ) : (
         <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/60 px-5 py-4 text-xs italic text-warning">{missing}</div>

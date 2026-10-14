@@ -3,6 +3,7 @@
 import { CheckCircle2, Clock, History, XCircle } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
+import { RichContent } from '@/components/ui/RichContent';
 import type { Course } from '@/types';
 import { StageCard, StageTitle } from './StageParts';
 
@@ -52,9 +53,9 @@ export function ApprovalHistoryStage({ course }: { course: Course }) {
                     <span className="text-xs text-subtle-foreground">{formatDate(entry.decidedAt ?? entry.createdAt)}</span>
                   </div>
                   {entry.comments ? (
-                    <div
+                    <RichContent
                       className="prose prose-sm mt-2 max-w-none rounded-xl border border-border/60 bg-muted/70 p-3 text-sm text-secondary-foreground"
-                      dangerouslySetInnerHTML={{ __html: entry.comments }}
+                      html={entry.comments}
                     />
                   ) : null}
                 </li>

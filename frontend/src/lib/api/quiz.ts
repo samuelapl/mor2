@@ -133,10 +133,11 @@ export async function startAttempt(assessmentId: string): Promise<StartedAttempt
 export async function submitAttempt(
   assessmentId: string,
   answers: SubmitAnswer[],
+  isAuto = false,
 ): Promise<GradedResult> {
   return api<GradedResult>(`assessments/${assessmentId}/submit`, {
     method: 'POST',
-    body: { answers },
+    body: { answers, isAuto },
   });
 }
 

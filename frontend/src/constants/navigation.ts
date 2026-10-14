@@ -620,12 +620,6 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     icon: Scale,
     permission: PERMISSION_GATED_PATHS['/laws-management'],
   },
-  // No permission: every signed-in user gets a link to the public news page.
-  {
-    label: 'News',
-    href: '/news',
-    icon: Newspaper,
-  },
   {
     label: 'Tax & Customs Laws',
     href: '/laws',

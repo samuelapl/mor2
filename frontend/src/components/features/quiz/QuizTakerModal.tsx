@@ -208,6 +208,26 @@ export function QuizTakerModal({
   const submit = async (isAuto = false) => {
     if (!assessment || submitting) return;
     setError(null);
+
+    // Enforce all questions answered unless auto-submitting on timer expiration
+    const currentAnswered = Object.values(answers).filter(
+      (val) => val !== undefined && val !== null && val !== '',
+    ).length;
+    if (!isAuto && currentAnswered < assessment.questions.length) {
+      const unanswered = assessment.questions.length - currentAnswered;
+      const msg = `Please answer all questions before submitting. (${unanswered} question${unanswered === 1 ? '' : 's'} remaining)`;
+      setError(msg);
+      toast.warning(msg);
+      const firstUnansweredIdx = assessment.questions.findIndex(
+        (_, idx) => answers[idx] === undefined || answers[idx] === null || answers[idx] === '',
+      );
+      if (firstUnansweredIdx !== -1) {
+        const el = document.getElementById(`question-${firstUnansweredIdx}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
     setSubmitting(true);
 
     // If submitting in preview mode
@@ -263,7 +283,7 @@ export function QuizTakerModal({
         questionId: assessment.questions[Number(index)].id,
         selectedOption,
       }));
-      const graded = await submitAttempt(assessment.id, payload);
+      const graded = await submitAttempt(assessment.id, payload, isAuto);
       setResult(graded);
       if (graded.passed) {
         toast.success(`Congratulations! You passed with ${graded.score}%.`);
@@ -285,7 +305,9 @@ export function QuizTakerModal({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const answeredCount = Object.keys(answers).length;
+  const answeredCount = Object.values(answers).filter(
+    (val) => val !== undefined && val !== null && val !== '',
+  ).length;
 
   const reviewByQuestionId = new Map<string, AssessmentReviewItem>(
     (result?.review ?? []).map((r) => [r.questionId, r]),
@@ -603,16 +625,29 @@ export function QuizTakerModal({
           ) : null}
 
           {error ? <p className="text-xs text-red-500">{error}</p> : null}
-          {assessment.questions.map((question, index) => (
+          {assessment.questions.map((question, index) => {
+            const isAnswered = answers[index] !== undefined && answers[index] !== '';
+            return (
             <div
               key={question.id}
-              className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm"
+              id={`question-${index}`}
+              className={cn(
+                'rounded-2xl border p-4 shadow-sm transition',
+                isAnswered
+                  ? 'border-border/80 bg-card'
+                  : 'border-warning/70 bg-card',
+              )}
             >
-              <div className="flex items-start gap-2 text-sm font-semibold text-foreground">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-[11px] font-bold text-white shadow-sm">
-                  {index + 1}
+              <div className="flex items-start justify-between gap-2 text-sm font-semibold text-foreground">
+                <div className="flex items-start gap-2 min-w-0">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-[11px] font-bold text-white shadow-sm">
+                    {index + 1}
+                  </span>
+                  <RichContent html={question.question} inline inheritText className="min-w-0" />
+                </div>
+                <span className="shrink-0 text-[11px] font-medium text-danger">
+                  * Required
                 </span>
-                <RichContent html={question.question} inline inheritText className="min-w-0" />
               </div>
 
               {question.imageUrl ? (
@@ -667,23 +702,28 @@ export function QuizTakerModal({
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
           <div className="sticky bottom-0 flex items-center justify-between rounded-2xl border border-border/80 bg-card/90 px-4 py-3 shadow-lg backdrop-blur-md">
             <div>
               <p className="text-xs font-semibold text-secondary-foreground">
                 {answeredCount}/{assessment.questions.length} answered
               </p>
               {answeredCount < assessment.questions.length ? (
-                <p className="text-[10px] text-subtle-foreground">Early submission permitted</p>
-              ) : null}
+                <p className="text-[10px] font-medium text-danger">
+                  All questions are required ({assessment.questions.length - answeredCount} remaining)
+                </p>
+              ) : (
+                <p className="text-[10px] font-medium text-success">All questions answered</p>
+              )}
             </div>
             <Button
               onClick={() => void submit(false)}
-              disabled={answeredCount === 0}
+              disabled={answeredCount < assessment.questions.length}
               isLoading={submitting}
               loadingText="Submitting…"
             >
-              {answeredCount < assessment.questions.length ? 'Submit Early' : 'Submit Assessment'}
+              Submit Assessment
             </Button>
           </div>
         </div>

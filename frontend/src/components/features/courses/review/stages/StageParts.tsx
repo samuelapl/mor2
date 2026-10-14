@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { stripHtmlTags } from '@/components/ui/RichContent';
+import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
 
 /** Shared layout pieces for the review stages, so every stage reads the same way. */
 
@@ -38,9 +38,9 @@ export function RichSection({ label, html, missing }: { label: string; html?: st
     <div className="space-y-1.5">
       <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
       {hasContent ? (
-        <div
+        <RichContent
           className="prose prose-sm max-w-none rounded-xl border border-border/60 bg-muted/50 p-4 text-sm leading-relaxed text-secondary-foreground"
-          dangerouslySetInnerHTML={{ __html: html! }}
+          html={html!}
         />
       ) : (
         <p className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/60 p-3 text-xs italic text-warning">{missing}</p>

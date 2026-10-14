@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { RichContent } from '@/components/ui/RichContent';
 import { toast } from '@/lib/toast';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { usePermissions } from '@/lib/usePermissions';
@@ -254,7 +255,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
                 <p className="font-bold">{t('courseReviewShell.rejectedReasonFromReviewer')}</p>
                 {/* Reasons are plain text now; older ones were saved as rich-text HTML. */}
                 {/<[a-z][\s\S]*>/i.test(latestRejection) ? (
-                  <div className="mt-1" dangerouslySetInnerHTML={{ __html: latestRejection }} />
+                  <RichContent className="mt-1" html={latestRejection} />
                 ) : (
                   <p className="mt-1 whitespace-pre-line">{latestRejection}</p>
                 )}

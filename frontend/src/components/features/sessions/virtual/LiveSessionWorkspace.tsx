@@ -336,10 +336,19 @@ function LiveKitInteractiveLayer({
           break;
         case 'QUIZ_SYNC_REQUEST':
           if (isStaff && (activeQuizRef.current || quizHistoryRef.current.length > 0)) {
+            const isRevealedNow = Boolean(revealDataRef.current);
+            const sanitizePayload = (q: any): any => {
+              if (!q) return q;
+              const { correctOptionIds, explanationEn, explanationAm, ...safe } = q;
+              return {
+                ...safe,
+                allQuestions: q.allQuestions ? q.allQuestions.map(sanitizePayload) : undefined,
+              };
+            };
             broadcast({
               type: 'QUIZ_SYNC_RESPONSE',
               payload: {
-                activeQuiz: activeQuizRef.current,
+                activeQuiz: isRevealedNow ? activeQuizRef.current : sanitizePayload(activeQuizRef.current),
                 answers: answersRef.current,
                 revealData: revealDataRef.current,
                 revealsByQuestionId: revealsByQuestionIdRef.current,
@@ -448,6 +457,21 @@ function LiveKitInteractiveLayer({
   const handleBroadcast = useCallback(
     (event: LiveKitDataEvent) => {
       processEvent(event);
+      if (event.type === 'QUIZ_START' && event.payload) {
+        const sanitizePayload = (q: any): any => {
+          if (!q) return q;
+          const { correctOptionIds, explanationEn, explanationAm, ...safe } = q;
+          return {
+            ...safe,
+            allQuestions: q.allQuestions ? q.allQuestions.map(sanitizePayload) : undefined,
+          };
+        };
+        broadcast({
+          ...event,
+          payload: sanitizePayload(event.payload),
+        });
+        return;
+      }
       broadcast(event);
     },
     [broadcast, processEvent],
