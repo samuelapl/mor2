@@ -138,7 +138,7 @@ export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
       },
       {
         id: 'nav-news',
-        labelEn: 'News & Directives',
+        labelEn: 'News',
         labelAm: '',
         href: '/news',
         isVisible: true,
@@ -357,7 +357,7 @@ export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
     links: [
       {
         id: 'footer-news',
-        labelEn: 'News & Directives',
+        labelEn: 'News',
         labelAm: '',
         href: '/news',
         isVisible: true,

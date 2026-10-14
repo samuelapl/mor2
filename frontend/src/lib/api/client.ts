@@ -27,6 +27,7 @@ type UnauthorizedHandler = () => void;
 
 let refreshHandler: RefreshHandler | null = null;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
+let refreshingPromise: Promise<string | null> | null = null;
 
 export function setRefreshHandler(handler: RefreshHandler | null): void {
   refreshHandler = handler;
@@ -139,7 +140,12 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     return await send(true);
   } catch (err) {
     if (err instanceof ApiError && err.status === 401 && !options.skipAuthRetry && refreshHandler) {
-      const newToken = await refreshHandler();
+      if (!refreshingPromise) {
+        refreshingPromise = refreshHandler().finally(() => {
+          refreshingPromise = null;
+        });
+      }
+      const newToken = await refreshingPromise;
       if (newToken) {
         accessToken = newToken;
         return await send(true);

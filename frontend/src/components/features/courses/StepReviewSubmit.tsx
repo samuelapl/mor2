@@ -427,9 +427,9 @@ export function StepReviewSubmit({
             Course Description
           </p>
           {description && stripHtmlTags(description) ? (
-            <div
+            <RichContent
               className="text-sm text-secondary-foreground leading-relaxed prose prose-sm max-w-none bg-muted/50 p-4 rounded-xl border border-border/60"
-              dangerouslySetInnerHTML={{ __html: description }}
+              html={description}
             />
           ) : (
             <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/60 p-3 text-xs text-warning italic">
@@ -445,9 +445,9 @@ export function StepReviewSubmit({
           </p>
           {objectives && stripHtmlTags(objectives) ? (
             <div className="rounded-xl bg-info-soft/60 p-4 border border-info/25 space-y-1">
-              <div
+              <RichContent
                 className="text-sm text-info leading-relaxed prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: objectives }}
+                html={objectives}
               />
             </div>
           ) : (

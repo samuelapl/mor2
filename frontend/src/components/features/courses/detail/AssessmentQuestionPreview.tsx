@@ -3,6 +3,7 @@
 import { Check } from 'lucide-react';
 import type { ApiAssessmentQuestion } from '@/lib/api/types';
 import { Badge } from '@/components/ui/Badge';
+import { RichContent } from '@/components/ui/RichContent';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
@@ -43,13 +44,12 @@ export function AssessmentQuestionPreview({
       </div>
 
       {/* Prompt */}
-      <div
+      <RichContent
         className="font-medium text-foreground text-sm prose prose-sm max-w-none"
-        dangerouslySetInnerHTML={{
-          __html:
-            question.question ||
-            (t('assessmentQuestionPreview.emNoQuestionPromptEm')),
-        }}
+        html={
+          question.question ||
+          t('assessmentQuestionPreview.emNoQuestionPromptEm')
+        }
       />
 
       {/* Image preview */}

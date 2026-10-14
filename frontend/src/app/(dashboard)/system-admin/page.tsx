@@ -25,7 +25,8 @@ import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { VerticalBarChart, BarChart } from '@/components/ui/charts';
+import { DonutChart, BarChart } from '@/components/ui/charts';
+import { formatAuditAction } from '@/lib/auditUtils';
 
 const ROLE_COLORS: Record<string, string> = {
   SYSTEM_ADMIN: '#ef4444',
@@ -102,7 +103,7 @@ export default function SystemAdminDashboardPage() {
     },
   ];
 
-  // Vertical Bar Chart: Users by Role (Fetched from database)
+  // Graphical Role Distribution: Users by Role (Donut Chart)
   const roleSegments = useMemo(() => {
     const roleCountMap = new Map<string, number>();
     if (stats?.roles) {
@@ -122,7 +123,6 @@ export default function SystemAdminDashboardPage() {
       label: roleLabels[roleKey] || roleKey,
       value: roleCountMap.get(roleKey) ?? 0,
       color: ROLE_COLORS[roleKey] || '#64748b',
-      subLabel: roleKey.replace('_', ' ').toLowerCase(),
     }));
   }, [stats?.roles, isAmharic]);
 
@@ -233,10 +233,12 @@ export default function SystemAdminDashboardPage() {
               </Badge>
             </div>
             <div className="mt-6">
-              <VerticalBarChart
-                items={roleSegments}
-                totalValue={usersCount}
-                unitLabel={t('systemAdminDashboardPage.users')}
+              <DonutChart
+                segments={roleSegments}
+                centerLabel={t('systemAdminDashboardPage.users')}
+                centerValue={usersCount}
+                size={190}
+                showLegend={true}
                 emptyText={t('systemAdminDashboardPage.noUsersRecordedInDatabase')}
               />
             </div>
@@ -347,7 +349,9 @@ export default function SystemAdminDashboardPage() {
                             ? `${log.user.firstName} ${log.user.lastName}`
                             : t('systemAdminDashboardPage.systemService')}
                         </span>{' '}
-                        <span className="text-secondary-foreground">{log.action}</span>
+                        <span className="text-secondary-foreground font-medium">
+                          {formatAuditAction(log.action).title}
+                        </span>
                         {log.entityId ? (
                           <span className="font-mono text-[11px] text-subtle-foreground">
                             {' '}

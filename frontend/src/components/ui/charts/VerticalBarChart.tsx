@@ -127,17 +127,17 @@ export function VerticalBarChart({
                   </span>
 
                   {/* Vertical Column Track */}
-                  <div className="w-full h-full max-w-[42px] bg-secondary/70 rounded-t-xl overflow-hidden flex items-end p-0.5 border border-border/50 shadow-2xs">
+                  <div className="w-full h-full max-w-[36px] bg-secondary/40 rounded-t-lg overflow-hidden flex items-end">
                     {/* The Animated Colored Vertical Bar Pillar */}
                     <div
                       className={cn(
                         'w-full rounded-t-lg transition-all duration-700 ease-out shadow-xs',
-                        isHovered ? 'brightness-110 shadow-md ring-2 ring-white/40' : '',
+                        isHovered ? 'brightness-110 shadow-md ring-2 ring-primary/40' : '',
                       )}
                       style={{
                         height: safeVal > 0 ? `${Math.max(6, percent)}%` : '0%',
                         backgroundColor: color,
-                        backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.08) 100%)`,
+                        backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(0,0,0,0.06) 100%)`,
                       }}
                     />
                   </div>
@@ -158,6 +158,10 @@ export function VerticalBarChart({
         {items.map((item, idx) => {
           const isHovered = hoveredIdx === idx;
           const color = item.color || '#6366f1';
+          const isRedundantSubLabel =
+            item.subLabel &&
+            item.subLabel.toLowerCase().replace(/[_ ]/g, '') ===
+              item.label.toLowerCase().replace(/[_ ]/g, '');
           return (
             <div
               key={idx}
@@ -185,7 +189,7 @@ export function VerticalBarChart({
                   {item.label}
                 </span>
               </div>
-              {item.subLabel && (
+              {item.subLabel && !isRedundantSubLabel && (
                 <span className="text-[10px] text-subtle-foreground truncate max-w-full mt-0.5">
                   {item.subLabel}
                 </span>

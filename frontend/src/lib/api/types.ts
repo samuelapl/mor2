@@ -948,6 +948,14 @@ export interface ApiAuditLog {
   userAgent: string | null;
   createdAt: string;
   user: { id: string; firstName: string; lastName: string; email: string } | null;
+  timestampUtc?: string;
+  actor?: string;
+  actorRole?: string;
+  resource?: string;
+  outcome?: 'SUCCESS' | 'FAILURE' | string;
+  changes?: string;
+  source?: string;
+  reason?: string;
 }
 
 export interface ApiAuditStats {

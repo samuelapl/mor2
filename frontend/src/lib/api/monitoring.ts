@@ -395,6 +395,22 @@ export function exportAuditCsv(): Promise<string> {
   return apiText('audit/export');
 }
 
+export function updateAuditLog(
+  id: string,
+  body: { reason?: string; action?: string },
+): Promise<ApiAuditLog> {
+  return api<ApiAuditLog>(`audit/${id}`, {
+    method: 'PATCH',
+    body,
+  });
+}
+
+export function deleteAuditLog(id: string): Promise<{ success: boolean; deletedId: string }> {
+  return api<{ success: boolean; deletedId: string }>(`audit/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Health                                                                     */
 /* -------------------------------------------------------------------------- */
