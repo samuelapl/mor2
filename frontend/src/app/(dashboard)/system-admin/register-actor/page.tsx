@@ -99,7 +99,8 @@ export default function RegisterActorPage() {
       toast.error('Password must be at least 6 characters.');
       return;
     }
-    if (form.role === 'trainer' && form.trainerType === 'IN_PERSON' && !form.primaryVenueId) {
+    const isTrainer = (form.role || '').toLowerCase() === 'trainer';
+    if (isTrainer && form.trainerType === 'IN_PERSON' && !form.primaryVenueId) {
       toast.error('Branch Venue is required for In-Person Trainers.');
       return;
     }
@@ -113,8 +114,8 @@ export default function RegisterActorPage() {
         phone: form.phone.trim() || undefined,
         password: form.password,
         role: form.role,
-        trainerType: form.role === 'trainer' ? form.trainerType : undefined,
-        primaryVenueId: form.primaryVenueId || undefined,
+        trainerType: isTrainer ? form.trainerType : undefined,
+        primaryVenueId: isTrainer && form.trainerType === 'IN_PERSON' ? (form.primaryVenueId || undefined) : undefined,
         mustChangePassword: form.mustChangePassword,
       });
 
@@ -210,73 +211,80 @@ export default function RegisterActorPage() {
             </select>
           </div>
 
-          {form.role === 'trainer' && (
-            <div className="rounded-xl border border-border/80 bg-muted/40 p-3.5 space-y-2.5">
-              <label className={labelClass}>
-                Trainer Specialization *
-              </label>
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => update({ trainerType: 'ONLINE' })}
-                  className={cn(
-                    'flex items-center justify-between rounded-lg border p-2.5 text-left text-xs transition',
-                    form.trainerType === 'ONLINE'
-                      ? 'border-primary bg-card ring-2 ring-primary/20 font-bold text-foreground'
-                      : 'border-border bg-card/60 text-muted-foreground hover:bg-card'
-                  )}
-                >
-                  <span>🌐 Pure Online</span>
-                  <span className={cn('h-3.5 w-3.5 rounded-full border', form.trainerType === 'ONLINE' && 'bg-primary border-primary')} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => update({ trainerType: 'IN_PERSON' })}
-                  className={cn(
-                    'flex items-center justify-between rounded-lg border p-2.5 text-left text-xs transition',
-                    form.trainerType === 'IN_PERSON'
-                      ? 'border-primary bg-card ring-2 ring-primary/20 font-bold text-foreground'
-                      : 'border-border bg-card/60 text-muted-foreground hover:bg-card'
-                  )}
-                >
-                  <span>🏢 In-Person Classroom</span>
-                  <span className={cn('h-3.5 w-3.5 rounded-full border', form.trainerType === 'IN_PERSON' && 'bg-primary border-primary')} />
-                </button>
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                {form.trainerType === 'IN_PERSON'
-                  ? 'In-person trainers must be assigned to their physical branch venue.'
-                  : 'Online trainers facilitate live virtual sessions.'}
-              </p>
-            </div>
-          )}
+          {(() => {
+            const isTrainer = (form.role || '').toLowerCase() === 'trainer';
+            const isInPersonTrainer = isTrainer && form.trainerType === 'IN_PERSON';
 
-          <div>
-            <label className={labelClass}>
-              {t('registerActorPage.primaryVenueBranchAssignment')}{' '}
-              {form.role === 'trainer' && form.trainerType === 'IN_PERSON'
-                ? '(Required for In-Person Trainers)'
-                : form.role === 'trainer'
-                ? `(${t('registerActorPage.recommendedForTrainers')})`
-                : ''}
-            </label>
-            <select
-              className={inputClass}
-              value={form.primaryVenueId}
-              onChange={(e) => update({ primaryVenueId: e.target.value })}
-              required={form.role === 'trainer' && form.trainerType === 'IN_PERSON'}
-            >
-              <option value="">{t('registerActorPage.noPrimaryVenueVirtualMultipleBranches')}</option>
-              {venues.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.branch} — {v.name} ({v.capacity} {t('registerActorPage.seats')})
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {t('registerActorPage.linkingATrainerToTheirPrimary')}
-            </p>
-          </div>
+            return (
+              <>
+                {isTrainer && (
+                  <div className="rounded-xl border border-border/80 bg-muted/40 p-3.5 space-y-2.5">
+                    <label className={labelClass}>
+                      Trainer Specialization *
+                    </label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => update({ trainerType: 'ONLINE' })}
+                        className={cn(
+                          'flex items-center justify-between rounded-lg border p-2.5 text-left text-xs transition',
+                          form.trainerType === 'ONLINE'
+                            ? 'border-primary bg-card ring-2 ring-primary/20 font-bold text-foreground'
+                            : 'border-border bg-card/60 text-muted-foreground hover:bg-card'
+                        )}
+                      >
+                        <span>🌐 Pure Online</span>
+                        <span className={cn('h-3.5 w-3.5 rounded-full border', form.trainerType === 'ONLINE' && 'bg-primary border-primary')} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => update({ trainerType: 'IN_PERSON' })}
+                        className={cn(
+                          'flex items-center justify-between rounded-lg border p-2.5 text-left text-xs transition',
+                          form.trainerType === 'IN_PERSON'
+                            ? 'border-primary bg-card ring-2 ring-primary/20 font-bold text-foreground'
+                            : 'border-border bg-card/60 text-muted-foreground hover:bg-card'
+                        )}
+                      >
+                        <span>🏢 In-Person Classroom</span>
+                        <span className={cn('h-3.5 w-3.5 rounded-full border', form.trainerType === 'IN_PERSON' && 'bg-primary border-primary')} />
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      {form.trainerType === 'IN_PERSON'
+                        ? 'In-person trainers must be assigned to their physical branch venue.'
+                        : 'Online trainers facilitate live virtual sessions.'}
+                    </p>
+                  </div>
+                )}
+
+                {isInPersonTrainer && (
+                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3.5 space-y-2">
+                    <label className={labelClass}>
+                      {t('registerActorPage.primaryVenueBranchAssignment')}{' '}
+                      <span className="text-destructive">* (Required for In-Person Trainers)</span>
+                    </label>
+                    <select
+                      className={inputClass}
+                      value={form.primaryVenueId}
+                      onChange={(e) => update({ primaryVenueId: e.target.value })}
+                      required
+                    >
+                      <option value="">-- Select Branch Venue --</option>
+                      {venues.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.branch} — {v.name} ({v.capacity} {t('registerActorPage.seats')})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {t('registerActorPage.linkingATrainerToTheirPrimary')}
+                    </p>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           <div>
             <label className={labelClass}>{t('bulkRegisterPage.password')}</label>

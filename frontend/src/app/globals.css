@@ -88,8 +88,13 @@
   }
 
   ::selection {
-    background: rgb(99 102 241 / 0.2);
+    background: rgb(99 102 241 / 0.25);
     color: rgb(30 27 75);
+  }
+
+  .dark ::selection {
+    background: rgb(99 102 241 / 0.45);
+    color: rgb(255 255 255);
   }
 
   /* Modern scrollbars */

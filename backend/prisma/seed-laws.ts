@@ -6,7 +6,12 @@ export async function seedLaws() {
   console.log('--- Seeding Tax & Customs Laws Categories and Documents ---');
 
   const admin = await prisma.user.findFirst({
-    where: { email: 'system.admin@mor.gov.et' },
+    where: {
+      OR: [
+        { email: 'sadministrator@gmail.com' },
+        { email: 'admin.haile@gmail.com' },
+      ],
+    },
   });
 
   if (!admin) {
