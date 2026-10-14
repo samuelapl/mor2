@@ -82,12 +82,18 @@ export class PreparedQuizService implements OnModuleDestroy {
   private async assertQuizExists(sessionId: string, quizId: string) {
     const quiz = await this.prisma.sessionPreparedQuiz.findUnique({
       where: { id: quizId },
-      include: { assessment: { select: { id: true, totalPoints: true } } },
+      include: {
+        assessment: {
+          select: { id: true, totalPoints: true } as any,
+        },
+      },
     });
     if (!quiz || quiz.sessionId !== sessionId) {
       throw new NotFoundException(`Prepared quiz group "${quizId}" not found for this session`);
     }
-    return quiz;
+    return quiz as typeof quiz & {
+      assessment?: { id: string; totalPoints?: number | null } | null;
+    };
   }
 
   private async orderedPoints(quizId: string) {
@@ -116,7 +122,7 @@ export class PreparedQuizService implements OnModuleDestroy {
   private get quizInclude() {
     return {
       // Formative course quiz this prepared quiz runs, if any (planned with the course).
-      assessment: { select: { id: true, totalPoints: true } },
+      assessment: { select: { id: true, totalPoints: true } as any },
       questions: {
         orderBy: { order: 'asc' as const },
         include: {
@@ -296,7 +302,7 @@ export class PreparedQuizService implements OnModuleDestroy {
    */
   async bulkAddQuestions(sessionId: string, quizId: string, dto: BulkAddPreparedQuestionsDto) {
     const quiz = await this.assertQuizExists(sessionId, quizId);
-    const plannedTotal = quiz.assessment ? (quiz.assessment.totalPoints || 10) : null;
+    const plannedTotal = (quiz as any).assessment ? ((quiz as any).assessment.totalPoints || 10) : null;
 
     const last = await this.prisma.sessionPreparedQuestion.findFirst({
       where: { quizId },
@@ -350,7 +356,7 @@ export class PreparedQuizService implements OnModuleDestroy {
   /** Remove a question from a quiz group and rebalance points to match planned totalPoints */
   async removeQuestion(sessionId: string, quizId: string, questionId: string) {
     const quiz = await this.assertQuizExists(sessionId, quizId);
-    const plannedTotal = quiz.assessment ? (quiz.assessment.totalPoints || 10) : null;
+    const plannedTotal = (quiz as any).assessment ? ((quiz as any).assessment.totalPoints || 10) : null;
 
     await this.prisma.sessionPreparedQuestion.deleteMany({
       where: { quizId, questionId },
@@ -382,7 +388,7 @@ export class PreparedQuizService implements OnModuleDestroy {
       next.set(item.questionId, item.points);
     }
 
-    const plannedTotal = quiz.assessment ? (quiz.assessment.totalPoints || 10) : null;
+    const plannedTotal = (quiz as any).assessment ? ((quiz as any).assessment.totalPoints || 10) : null;
     if (plannedTotal !== null) {
       const total = [...next.values()].reduce((sum, p) => sum + p, 0);
       if (total > plannedTotal) {

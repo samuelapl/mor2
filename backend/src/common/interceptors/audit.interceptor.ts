@@ -31,6 +31,35 @@ function toActionBase(req: Request): string {
   return segments.join('_');
 }
 
+const SENSITIVE_KEYS = new Set([
+  'password',
+  'newPassword',
+  'currentPassword',
+  'confirmPassword',
+  'token',
+  'refreshToken',
+  'secret',
+  'apiSecret',
+  'code',
+  'pin',
+]);
+
+function redactSensitive(data: unknown): unknown {
+  if (!data || typeof data !== 'object') return data;
+  if (Array.isArray(data)) return data.map(redactSensitive);
+  const copy: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
+    if (SENSITIVE_KEYS.has(k)) {
+      copy[k] = '[REDACTED]';
+    } else if (v && typeof v === 'object') {
+      copy[k] = redactSensitive(v);
+    } else {
+      copy[k] = v;
+    }
+  }
+  return copy;
+}
+
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
   private readonly logger = new Logger(AuditInterceptor.name);
@@ -62,15 +91,23 @@ export class AuditInterceptor implements NestInterceptor {
       const params = req.params as Record<string, string>;
       const entityId = Object.values(params).find((v) => UUID_RE.test(v)) || null;
 
+      const actorRole = actor?.roles?.[0] || 'SYSTEM';
+      const outcome = success ? 'SUCCESS' : 'FAILURE';
+      const requestId = (req.headers['x-request-id'] as string) || undefined;
+      const sanitizedBody = (redactSensitive(req.body) as Record<string, unknown>) ?? {};
+
       this.auditService
         .record({
           userId: actor?.id,
+          actorRole,
+          outcome,
           action: `${action}${success ? '' : '_FAILED'}`,
           entity,
           entityId: entityId ?? undefined,
-          newValues: (req.body as Record<string, unknown>) ?? {},
+          newValues: sanitizedBody,
           ipAddress: normalizeIp(req.ip),
-          userAgent: req.headers['user-agent'],
+          userAgent: req.headers['user-agent'] as string | undefined,
+          requestId,
         })
         .catch((err) => this.logger.error(`Failed to write audit log: ${err.message}`));
     };

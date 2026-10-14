@@ -107,7 +107,8 @@ export class AttendanceController {
     @Body() dto: HeartbeatDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.attendanceService.recordHeartbeat(sessionId, user.id, dto?.activeSeconds ?? 15);
+    const safeSeconds = Math.max(1, Math.min(dto?.activeSeconds ?? 15, 60));
+    return this.attendanceService.recordHeartbeat(sessionId, user.id, safeSeconds);
   }
 
   @Post('sessions/:sessionId/leave')
@@ -118,6 +119,7 @@ export class AttendanceController {
   }
 
   @Get('sessions/:sessionId/report')
+  @Permissions('attendance.view')
   @ApiOperation({ summary: 'Get full attendance report and calculations for a session' })
   @ApiParam({ name: 'sessionId', type: String })
   async getReport(@Param('sessionId') sessionId: string) {

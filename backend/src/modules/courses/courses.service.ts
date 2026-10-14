@@ -42,6 +42,13 @@ const STAFF_ROLES: RoleName[] = [
   RoleName.TRAINER,
 ];
 
+const SAFE_USER_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+} as const;
+
 @Injectable()
 export class CoursesService {
   constructor(
@@ -291,7 +298,7 @@ export class CoursesService {
         take: limit,
         orderBy,
         include: {
-          owners: { include: { user: true } },
+          owners: { include: { user: { select: SAFE_USER_SELECT } } },
         },
       }),
       this.prisma.course.count({ where }),
@@ -305,9 +312,9 @@ export class CoursesService {
     const course = await this.prisma.course.findUnique({
       where: { id },
       include: {
-        owners: { include: { user: true } },
-        approvals: { include: { approver: true } },
-        trainers: { include: { user: true } },
+        owners: { include: { user: { select: SAFE_USER_SELECT } } },
+        approvals: { include: { approver: { select: SAFE_USER_SELECT } } },
+        trainers: { include: { user: { select: SAFE_USER_SELECT } } },
         modules: {
           where: { deletedAt: null },
           orderBy: { order: 'asc' },
@@ -610,7 +617,7 @@ export class CoursesService {
             : [{ userId: currentUserId }],
         },
       },
-      include: { owners: { include: { user: true } } },
+      include: { owners: { include: { user: { select: SAFE_USER_SELECT } } } },
     });
 
     return this.formatCourseCompat(course);
@@ -648,7 +655,7 @@ export class CoursesService {
     const updated = await this.prisma.course.update({
       where: { id },
       data,
-      include: { owners: { include: { user: true } } },
+      include: { owners: { include: { user: { select: SAFE_USER_SELECT } } } },
     });
 
     return this.formatCourseCompat(updated);
@@ -1056,7 +1063,7 @@ export class CoursesService {
         courseId,
         userId,
       },
-      include: { user: true },
+      include: { user: { select: SAFE_USER_SELECT } },
     });
   }
 
