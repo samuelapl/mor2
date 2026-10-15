@@ -1,49 +1,58 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@config/prisma.service';
+import { CacheService } from '@common/cache';
 import { CreateVenueDto, UpdateVenueDto } from './dto';
 import { InPersonSessionsService } from '@modules/live-sessions/in-person/in-person-sessions.service';
+
+const VENUES_TTL_SECONDS = 1800; // 30 minutes
 
 @Injectable()
 export class VenuesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly inPersonSessions: InPersonSessionsService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async findAll(query?: { branch?: string; search?: string; isActive?: boolean }) {
-    const where: any = {};
+    const cacheKey = `venues:list:${query?.branch || ''}:${query?.isActive ?? ''}:${query?.search || ''}`;
+    return this.cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const where: any = {};
 
-    if (query?.branch) {
-      where.branch = { contains: query.branch, mode: 'insensitive' };
-    }
+        if (query?.branch) {
+          where.branch = { contains: query.branch, mode: 'insensitive' };
+        }
 
-    if (query?.isActive !== undefined) {
-      where.isActive = query.isActive;
-    }
+        if (query?.isActive !== undefined) {
+          where.isActive = query.isActive;
+        }
 
-    if (query?.search) {
-      where.OR = [
-        { name: { contains: query.search, mode: 'insensitive' } },
-        { branch: { contains: query.search, mode: 'insensitive' } },
-        { building: { contains: query.search, mode: 'insensitive' } },
-      ];
-    }
+        if (query?.search) {
+          where.OR = [
+            { name: { contains: query.search, mode: 'insensitive' } },
+            { branch: { contains: query.search, mode: 'insensitive' } },
+            { building: { contains: query.search, mode: 'insensitive' } },
+          ];
+        }
 
-    const venues = await this.prisma.venue.findMany({
-      where,
-      orderBy: [{ branch: 'asc' }, { name: 'asc' }],
-      include: {
-        _count: {
-          select: {
-            sessions: true,
-            trainers: true,
-            enrollments: true,
+        return this.prisma.venue.findMany({
+          where,
+          orderBy: [{ branch: 'asc' }, { name: 'asc' }],
+          include: {
+            _count: {
+              select: {
+                sessions: true,
+                trainers: true,
+                enrollments: true,
+              },
+            },
           },
-        },
+        });
       },
-    });
-
-    return venues;
+      VENUES_TTL_SECONDS,
+    );
   }
 
   async findOne(id: string) {
@@ -98,7 +107,7 @@ export class VenuesService {
   }
 
   async create(dto: CreateVenueDto) {
-    return this.prisma.venue.create({
+    const venue = await this.prisma.venue.create({
       data: {
         name: dto.name.trim(),
         building: dto.building?.trim() || null,
@@ -108,12 +117,14 @@ export class VenuesService {
         isActive: dto.isActive !== undefined ? dto.isActive : true,
       },
     });
+    await this.cacheService.delByPattern('venues:*');
+    return venue;
   }
 
   async update(id: string, dto: UpdateVenueDto) {
     await this.findOne(id);
 
-    return this.prisma.venue.update({
+    const updated = await this.prisma.venue.update({
       where: { id },
       data: {
         name: dto.name !== undefined ? dto.name.trim() : undefined,
@@ -124,6 +135,8 @@ export class VenuesService {
         isActive: dto.isActive !== undefined ? dto.isActive : undefined,
       },
     });
+    await this.cacheService.delByPattern('venues:*');
+    return updated;
   }
 
   async remove(id: string) {
@@ -143,9 +156,11 @@ export class VenuesService {
       );
     }
 
-    return this.prisma.venue.delete({
+    const deleted = await this.prisma.venue.delete({
       where: { id },
     });
+    await this.cacheService.delByPattern('venues:*');
+    return deleted;
   }
 
   /**

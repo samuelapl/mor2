@@ -1,7 +1,7 @@
 {
   "name": "mor-lms-desktop",
   "productName": "MoR LMS",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "MoR Tele ELTMS Desktop Application",
   "main": "main.js",
   "scripts": {
@@ -27,30 +27,23 @@
     "directories": {
       "output": "out"
     },
-    "afterPack": "./afterPack.js",
     "files": [
-      "**/*"
+      "main.js",
+      "preload.js",
+      "package.json",
+      "assets/**/*",
+      "installer.nsh"
     ],
-    "extraResources": [
-      {
-        "from": "../frontend/.next/standalone",
-        "to": "standalone",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "runtime/node.exe",
-        "to": "node.exe"
-      }
-    ],
+    "compression": "maximum",
     "win": {
-      "target": {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
-      },
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "assets/mor-lms.ico"
     },
     "nsis": {
@@ -58,8 +51,8 @@
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "MoR LMS",
       "runAfterFinish": false,
-      "artifactName": "MoR-LMS-Setup.exe",
-      "include": "installer.nsh"
+      "include": "installer.nsh",
+      "artifactName": "MoR-ELTMS-Setup.${ext}"
     }
   }
 }

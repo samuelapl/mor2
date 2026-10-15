@@ -4,12 +4,10 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  OnModuleDestroy,
 } from '@nestjs/common';
-import Redis from 'ioredis';
 import { RoleName } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
-import { RedisConfig } from '@config/app.config';
+import { CacheService } from '@common/cache';
 
 const CACHE_TTL_SECONDS = 15;
 const PERMISSION_MANAGE_CODE = 'permission.manage';
@@ -19,68 +17,27 @@ function cacheKeyForRole(role: string): string {
 }
 
 @Injectable()
-export class PermissionsService implements OnModuleDestroy {
+export class PermissionsService {
   private readonly logger = new Logger(PermissionsService.name);
-  private readonly redis: Redis;
 
-  constructor(private readonly prisma: PrismaService) {
-    // Best-effort cache: every read falls back to the DB on any Redis error,
-    // so permission correctness never depends on Redis being up.
-    this.redis = new Redis({
-      host: RedisConfig.host,
-      port: RedisConfig.port,
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-      retryStrategy: () => null,
-      enableOfflineQueue: false,
-    });
-    this.redis.on('error', () => undefined);
-  }
-
-  async onModuleDestroy() {
-    await this.redis.quit().catch(() => this.redis.disconnect());
-  }
-
-  private async ensureConnected(): Promise<void> {
-    if (this.redis.status === 'wait' || this.redis.status === 'end') {
-      await this.redis.connect();
-    }
-  }
-
-  private async getCachedRolePermissions(role: string): Promise<string[] | null> {
-    try {
-      await this.ensureConnected();
-      const raw = await this.redis.get(cacheKeyForRole(role));
-      return raw ? (JSON.parse(raw) as string[]) : null;
-    } catch (err) {
-      this.logger.debug(`Permission cache read failed for role ${role}: ${err}`);
-      return null;
-    }
-  }
-
-  private async setCachedRolePermissions(role: string, codes: string[]): Promise<void> {
-    try {
-      await this.ensureConnected();
-      await this.redis.set(cacheKeyForRole(role), JSON.stringify(codes), 'EX', CACHE_TTL_SECONDS);
-    } catch (err) {
-      this.logger.debug(`Permission cache write failed for role ${role}: ${err}`);
-    }
-  }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   /** Permission codes granted to a single role, cached with a ~15s TTL. */
   async getPermissionCodesForRole(role: RoleName): Promise<string[]> {
-    const cached = await this.getCachedRolePermissions(role);
-    if (cached) {
-      return cached;
-    }
-
-    const rows = await this.prisma.rolePermission.findMany({
-      where: { role: { name: role } },
-      include: { permission: true },
-    });
-    const codes = rows.map((r) => r.permission.code);
-    await this.setCachedRolePermissions(role, codes);
-    return codes;
+    return this.cacheService.getOrSet(
+      cacheKeyForRole(role),
+      async () => {
+        const rows = await this.prisma.rolePermission.findMany({
+          where: { role: { name: role } },
+          include: { permission: true },
+        });
+        return rows.map((r) => r.permission.code);
+      },
+      CACHE_TTL_SECONDS,
+    );
   }
 
   /** Union of permission codes across every role a user holds. */
@@ -105,12 +62,7 @@ export class PermissionsService implements OnModuleDestroy {
 
   /** Invalidate the cache after any grant/revoke — Phase 1 invalidates the whole role at once. */
   async invalidateRole(role: string): Promise<void> {
-    try {
-      await this.ensureConnected();
-      await this.redis.del(cacheKeyForRole(role));
-    } catch (err) {
-      this.logger.debug(`Permission cache invalidation failed for role ${role}: ${err}`);
-    }
+    await this.cacheService.del(cacheKeyForRole(role));
   }
 
   async listPermissionsGroupedByResource(): Promise<Record<string, unknown[]>> {

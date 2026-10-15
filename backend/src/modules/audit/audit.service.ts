@@ -1,11 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
 import { PaginationQuery } from '@common/interfaces';
 
-interface AuditEntry {
+export interface AuditEntry {
   userId?: string;
+  actorRole?: string;
+  outcome?: 'SUCCESS' | 'FAILURE';
   action: string;
   entity: string;
   entityId?: string;
@@ -13,6 +15,28 @@ interface AuditEntry {
   newValues?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
+  requestId?: string;
+  reason?: string;
+}
+
+export function computeChangesDiff(
+  oldVals?: Record<string, unknown> | null,
+  newVals?: Record<string, unknown> | null,
+): string {
+  if (!oldVals && !newVals) return '-';
+  const diffs: string[] = [];
+  const keys = new Set([...Object.keys(oldVals || {}), ...Object.keys(newVals || {})]);
+  for (const k of keys) {
+    if (k === '_meta') continue;
+    const oldV = oldVals ? (oldVals as Record<string, unknown>)[k] : undefined;
+    const newV = newVals ? (newVals as Record<string, unknown>)[k] : undefined;
+    if (JSON.stringify(oldV) !== JSON.stringify(newV)) {
+      const oldStr = oldV !== undefined ? JSON.stringify(oldV) : 'none';
+      const newStr = newV !== undefined ? JSON.stringify(newV) : 'none';
+      diffs.push(`${k}: ${oldStr} → ${newStr}`);
+    }
+  }
+  return diffs.length > 0 ? diffs.join('; ') : '-';
 }
 
 @Injectable()
@@ -20,6 +44,17 @@ export class AuditService {
   constructor(private readonly prisma: PrismaService) {}
 
   async record(entry: AuditEntry) {
+    const meta = {
+      actorRole: entry.actorRole,
+      outcome: entry.outcome || (entry.action.endsWith('_FAILED') ? 'FAILURE' : 'SUCCESS'),
+      requestId: entry.requestId,
+      reason: entry.reason,
+    };
+    const combinedNewValues = {
+      ...(entry.newValues || {}),
+      _meta: meta,
+    };
+
     return this.prisma.auditLog.create({
       data: {
         userId: entry.userId,
@@ -27,7 +62,7 @@ export class AuditService {
         entity: entry.entity,
         entityId: entry.entityId,
         oldValues: entry.oldValues as Prisma.InputJsonValue | undefined,
-        newValues: entry.newValues as Prisma.InputJsonValue | undefined,
+        newValues: combinedNewValues as Prisma.InputJsonValue | undefined,
         ipAddress: entry.ipAddress,
         userAgent: entry.userAgent,
       },
@@ -54,13 +89,55 @@ export class AuditService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: { select: { id: true, firstName: true, lastName: true, email: true } },
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              roles: { select: { role: true } },
+            },
+          },
         },
       }),
       this.prisma.auditLog.count({ where }),
     ]);
 
-    return buildPaginatedResponse(logs, total, page, limit);
+    const formatted = logs.map((log) => {
+      const meta = (log.newValues as Record<string, unknown>)?._meta as
+        | { actorRole?: string; outcome?: string; requestId?: string; reason?: string }
+        | undefined;
+      const userRoles = (log.user as any)?.roles as
+        | Array<{ role?: string }>
+        | undefined;
+      const primaryRole = userRoles?.[0]?.role;
+      const actorRole = meta?.actorRole || primaryRole || 'SYSTEM';
+      const outcome = meta?.outcome || (log.action.endsWith('_FAILED') ? 'FAILURE' : 'SUCCESS');
+      const resource = `${log.entity}${log.entityId ? `_${log.entityId.slice(0, 8)}` : ''}`;
+      const source =
+        [log.ipAddress, log.userAgent ? log.userAgent.slice(0, 40) : undefined, meta?.requestId]
+          .filter(Boolean)
+          .join(', ') || 'Direct';
+      const reason = meta?.reason || (outcome === 'FAILURE' ? 'Operation failed' : '');
+      const changes = computeChangesDiff(
+        log.oldValues as Record<string, unknown> | null,
+        log.newValues as Record<string, unknown> | null,
+      );
+
+      return {
+        ...log,
+        actor: log.user ? `${log.user.firstName} ${log.user.lastName}` : (log.userId || 'SYSTEM'),
+        actorRole,
+        outcome,
+        resource,
+        source,
+        reason,
+        changes,
+        timestampUtc: log.createdAt.toISOString(),
+      };
+    });
+
+    return buildPaginatedResponse(formatted, total, page, limit);
   }
 
   async findByEntity(entity: string, entityId: string) {
@@ -151,32 +228,84 @@ export class AuditService {
     };
 
     const header = [
-      'timestamp',
-      'action',
-      'entity',
-      'entityId',
-      'actor',
-      'actorEmail',
-      'ipAddress',
-      'oldValues',
-      'newValues',
+      'Timestamp (UTC)',
+      'Actor',
+      'Actor Role',
+      'Action',
+      'Resource',
+      'Outcome',
+      'Changes',
+      'Source',
+      'Reason',
     ];
-    const rows = logs.map((log) =>
-      [
+    const rows = logs.map((log) => {
+      const meta = (log.newValues as Record<string, unknown>)?._meta as
+        | { actorRole?: string; outcome?: string; requestId?: string; reason?: string }
+        | undefined;
+      const actor = log.user
+        ? `${log.user.firstName} ${log.user.lastName}`
+        : (log.userId || 'SYSTEM');
+      const actorRole = meta?.actorRole || 'SYSTEM';
+      const outcome = meta?.outcome || (log.action.endsWith('_FAILED') ? 'FAILURE' : 'SUCCESS');
+      const resource = `${log.entity}${log.entityId ? `_${log.entityId}` : ''}`;
+      const changes = computeChangesDiff(
+        log.oldValues as Record<string, unknown> | null,
+        log.newValues as Record<string, unknown> | null,
+      );
+      const source =
+        [log.ipAddress, meta?.requestId].filter(Boolean).join(' | ') || 'Direct';
+      const reason = meta?.reason || (outcome === 'FAILURE' ? 'Operation failed' : '');
+
+      return [
         log.createdAt.toISOString(),
+        actor,
+        actorRole,
         log.action,
-        log.entity,
-        log.entityId ?? '',
-        log.user ? `${log.user.firstName} ${log.user.lastName}` : '',
-        log.user?.email ?? '',
-        log.ipAddress ?? '',
-        JSON.stringify(log.oldValues ?? {}),
-        JSON.stringify(log.newValues ?? {}),
+        resource,
+        outcome,
+        changes,
+        source,
+        reason,
       ]
         .map(escape)
-        .join(','),
-    );
+        .join(',');
+    });
 
     return [header.map(escape).join(','), ...rows].join('\n');
+  }
+
+  async update(id: string, dto: { reason?: string; action?: string }) {
+    const log = await this.prisma.auditLog.findUnique({ where: { id } });
+    if (!log) {
+      throw new NotFoundException(`Audit log entry ${id} not found`);
+    }
+
+    const currentNew = (log.newValues as Record<string, unknown>) || {};
+    const currentMeta = (currentNew._meta as Record<string, unknown>) || {};
+
+    const updatedNew = {
+      ...currentNew,
+      _meta: {
+        ...currentMeta,
+        ...(dto.reason !== undefined ? { reason: dto.reason } : {}),
+      },
+    };
+
+    return this.prisma.auditLog.update({
+      where: { id },
+      data: {
+        ...(dto.action ? { action: dto.action } : {}),
+        newValues: updatedNew,
+      },
+    });
+  }
+
+  async remove(id: string) {
+    const log = await this.prisma.auditLog.findUnique({ where: { id } });
+    if (!log) {
+      throw new NotFoundException(`Audit log entry ${id} not found`);
+    }
+    await this.prisma.auditLog.delete({ where: { id } });
+    return { success: true, deletedId: id };
   }
 }

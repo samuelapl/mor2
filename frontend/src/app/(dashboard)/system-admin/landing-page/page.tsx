@@ -611,27 +611,38 @@ export default function LandingPageCmsPage() {
                         <td className="py-3 px-3 text-secondary-foreground">{link.labelAm || '—'}</td>
                         <td className="py-3 px-3 font-mono text-[11px] text-muted-foreground">{link.href}</td>
                         <td className="py-3 px-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = config.header.navLinks.map((l, i) =>
-                                i === idx ? { ...l, isVisible: !l.isVisible } : l,
-                              );
-                              setConfig((prev) => ({
-                                ...prev,
-                                header: { ...prev.header, navLinks: updated },
-                              }));
-                            }}
-                            className={cn(
-                              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition',
-                              link.isVisible
-                                ? 'bg-success-soft text-success hover:opacity-80'
-                                : 'bg-muted text-muted-foreground hover:opacity-80',
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = config.header.navLinks.map((l, i) =>
+                                  i === idx ? { ...l, isVisible: !l.isVisible } : l,
+                                );
+                                setConfig((prev) => ({
+                                  ...prev,
+                                  header: { ...prev.header, navLinks: updated },
+                                }));
+                              }}
+                              className={cn(
+                                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition',
+                                link.isVisible
+                                  ? 'bg-success-soft text-success hover:opacity-80'
+                                  : 'bg-muted text-muted-foreground hover:opacity-80',
+                              )}
+                            >
+                              {link.isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                              <span>{link.isVisible ? t('landingPageCms.visible') : t('landingPageCms.hidden')}</span>
+                            </button>
+                            {link.desktopOnly && (
+                              <span
+                                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                                title={t('landingPageCms.desktopOnlyHelp')}
+                              >
+                                <Globe className="h-2.5 w-2.5" />
+                                <span>{t('landingPageCms.webOnlyBadge')}</span>
+                              </span>
                             )}
-                          >
-                            {link.isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                            <span>{link.isVisible ? t('landingPageCms.visible') : t('landingPageCms.hidden')}</span>
-                          </button>
+                          </div>
                         </td>
                         <td className="py-3 px-3 text-right">
                           <div className="flex items-center justify-end gap-1.5">
@@ -1828,27 +1839,38 @@ export default function LandingPageCmsPage() {
                         <td className="py-3 px-3 text-secondary-foreground">{link.labelAm || '—'}</td>
                         <td className="py-3 px-3 font-mono text-[11px] text-muted-foreground">{link.href}</td>
                         <td className="py-3 px-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = config.footer.links.map((l, i) =>
-                                i === idx ? { ...l, isVisible: !l.isVisible } : l,
-                              );
-                              setConfig((prev) => ({
-                                ...prev,
-                                footer: { ...prev.footer, links: updated },
-                              }));
-                            }}
-                            className={cn(
-                              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition',
-                              link.isVisible
-                                ? 'bg-success-soft text-success hover:opacity-80'
-                                : 'bg-muted text-muted-foreground hover:opacity-80',
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = config.footer.links.map((l, i) =>
+                                  i === idx ? { ...l, isVisible: !l.isVisible } : l,
+                                );
+                                setConfig((prev) => ({
+                                  ...prev,
+                                  footer: { ...prev.footer, links: updated },
+                                }));
+                              }}
+                              className={cn(
+                                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition',
+                                link.isVisible
+                                  ? 'bg-success-soft text-success hover:opacity-80'
+                                  : 'bg-muted text-muted-foreground hover:opacity-80',
+                              )}
+                            >
+                              {link.isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                              <span>{link.isVisible ? t('landingPageCms.visible') : t('landingPageCms.hidden')}</span>
+                            </button>
+                            {link.desktopOnly && (
+                              <span
+                                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                                title={t('landingPageCms.desktopOnlyHelp')}
+                              >
+                                <Globe className="h-2.5 w-2.5" />
+                                <span>{t('landingPageCms.webOnlyBadge')}</span>
+                              </span>
                             )}
-                          >
-                            {link.isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                            <span>{link.isVisible ? t('landingPageCms.visible') : t('landingPageCms.hidden')}</span>
-                          </button>
+                          </div>
                         </td>
                         <td className="py-3 px-3 text-right">
                           <div className="flex items-center justify-end gap-1.5">
@@ -1965,7 +1987,7 @@ export default function LandingPageCmsPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-6 pt-2">
+              <div className="space-y-3 pt-2">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1973,18 +1995,31 @@ export default function LandingPageCmsPage() {
                     onChange={(e) => setEditingLink({ ...editingLink, isVisible: e.target.checked })}
                     className="rounded border-border text-primary focus:ring-primary"
                   />
-                  <span>{t('landingPageCms.visible')}</span>
+                  <span className="font-medium text-foreground">{t('landingPageCms.visible')}</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(editingLink.desktopOnly)}
-                    onChange={(e) => setEditingLink({ ...editingLink, desktopOnly: e.target.checked })}
-                    className="rounded border-border text-primary focus:ring-primary"
-                  />
-                  <span>{t('landingPageCms.desktopOnly')}</span>
-                </label>
+                <div className="rounded-lg border border-border/80 bg-muted/30 p-3">
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(editingLink.desktopOnly)}
+                      onChange={(e) => setEditingLink({ ...editingLink, desktopOnly: e.target.checked })}
+                      className="mt-0.5 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-foreground">{t('landingPageCms.desktopOnly')}</span>
+                        <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                          <Globe className="h-3 w-3" />
+                          <span>{t('landingPageCms.webOnlyBadge')}</span>
+                        </span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        {t('landingPageCms.desktopOnlyHelp')}
+                      </p>
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
           </Modal>

@@ -15,13 +15,19 @@ export interface GradedAnswer {
 }
 
 export function gradeAnswers(questions: GradableQuestion[], answers: RawAnswer[]): GradedAnswer[] {
-  if (!Array.isArray(answers)) return [];
-  return answers.map((answer) => {
-    const question = questions.find((q) => q.id === answer.questionId);
-    const isCorrect = question?.correctAnswer === answer.selectedOption;
+  const byQuestion = new Map<string, RawAnswer>();
+  for (const a of Array.isArray(answers) ? answers : []) {
+    if (a?.questionId) byQuestion.set(a.questionId, a); // one answer per question
+  }
+  return questions.map((q) => {
+    const answer = byQuestion.get(q.id);
+    const isCorrect =
+      answer?.selectedOption !== undefined &&
+      q.correctAnswer !== undefined &&
+      q.correctAnswer === answer.selectedOption;
     return {
-      questionId: answer.questionId ?? '',
-      selectedOption: answer.selectedOption,
+      questionId: q.id,
+      selectedOption: answer?.selectedOption,
       isCorrect,
     };
   });

@@ -4,15 +4,13 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  OnModuleDestroy,
 } from '@nestjs/common';
-import Redis from 'ioredis';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { PermissionsService } from '@modules/permissions/permissions.service';
 import { assertCanRunSession } from '@modules/live-sessions/session-access';
 import type { AuthenticatedUser } from '@common/interfaces';
-import { RedisConfig } from '@config/app.config';
+import { CacheService } from '@common/cache';
 import {
   CreatePreparedQuizDto,
   UpdatePreparedQuizDto,
@@ -29,44 +27,19 @@ function cacheKey(sessionId: string): string {
 }
 
 @Injectable()
-export class PreparedQuizService implements OnModuleDestroy {
+export class PreparedQuizService {
   private readonly logger = new Logger(PreparedQuizService.name);
-  private readonly redis: Redis;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly permissions: PermissionsService,
-  ) {
-    this.redis = new Redis({
-      host: RedisConfig.host,
-      port: RedisConfig.port,
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-      retryStrategy: () => null,
-      enableOfflineQueue: false,
-    });
-    this.redis.on('error', () => undefined);
-  }
-
-  async onModuleDestroy() {
-    await this.redis.quit().catch(() => this.redis.disconnect());
-  }
+    private readonly cacheService: CacheService,
+  ) {}
 
   // ─── Private helpers ───────────────────────────────────────────────────────
 
-  private async ensureConnected(): Promise<void> {
-    if (this.redis.status === 'wait' || this.redis.status === 'end') {
-      await this.redis.connect();
-    }
-  }
-
   private async invalidateCache(sessionId: string): Promise<void> {
-    try {
-      await this.ensureConnected();
-      await this.redis.del(cacheKey(sessionId));
-    } catch {
-      // Ignore
-    }
+    await this.cacheService.del(cacheKey(sessionId));
   }
 
   private async assertSessionExists(sessionId: string): Promise<void> {
@@ -82,12 +55,18 @@ export class PreparedQuizService implements OnModuleDestroy {
   private async assertQuizExists(sessionId: string, quizId: string) {
     const quiz = await this.prisma.sessionPreparedQuiz.findUnique({
       where: { id: quizId },
-      include: { assessment: { select: { id: true, totalPoints: true } } },
+      include: {
+        assessment: {
+          select: { id: true, totalPoints: true } as any,
+        },
+      },
     });
     if (!quiz || quiz.sessionId !== sessionId) {
       throw new NotFoundException(`Prepared quiz group "${quizId}" not found for this session`);
     }
-    return quiz;
+    return quiz as typeof quiz & {
+      assessment?: { id: string; totalPoints?: number | null } | null;
+    };
   }
 
   private async orderedPoints(quizId: string) {
@@ -116,7 +95,7 @@ export class PreparedQuizService implements OnModuleDestroy {
   private get quizInclude() {
     return {
       // Formative course quiz this prepared quiz runs, if any (planned with the course).
-      assessment: { select: { id: true, totalPoints: true } },
+      assessment: { select: { id: true, totalPoints: true } as any },
       questions: {
         orderBy: { order: 'asc' as const },
         include: {
@@ -198,34 +177,21 @@ export class PreparedQuizService implements OnModuleDestroy {
 
   /**
    * Return all prepared quiz groups for a session.
-   * Reads from Redis first; falls back to DB and repopulates cache on miss.
+   * Reads from cache first; falls back to DB and repopulates cache on miss.
    */
   async findAll(sessionId: string) {
     await this.assertSessionExists(sessionId);
 
-    try {
-      await this.ensureConnected();
-      const cached = await this.redis.get(cacheKey(sessionId));
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    } catch {
-      this.logger.warn(`Redis read failed for session ${sessionId} — falling back to DB`);
-    }
-
-    const rows = await this.prisma.sessionPreparedQuiz.findMany({
-      where: { sessionId },
-      orderBy: { order: 'asc' },
-      include: this.quizInclude,
-    });
-
-    try {
-      await this.redis.set(cacheKey(sessionId), JSON.stringify(rows), 'EX', CACHE_TTL_SECONDS);
-    } catch {
-      // Ignore
-    }
-
-    return rows;
+    return this.cacheService.getOrSet(
+      cacheKey(sessionId),
+      () =>
+        this.prisma.sessionPreparedQuiz.findMany({
+          where: { sessionId },
+          orderBy: { order: 'asc' },
+          include: this.quizInclude,
+        }),
+      CACHE_TTL_SECONDS,
+    );
   }
 
   /** Create a new named quiz group for a session */
@@ -296,7 +262,7 @@ export class PreparedQuizService implements OnModuleDestroy {
    */
   async bulkAddQuestions(sessionId: string, quizId: string, dto: BulkAddPreparedQuestionsDto) {
     const quiz = await this.assertQuizExists(sessionId, quizId);
-    const plannedTotal = quiz.assessment ? (quiz.assessment.totalPoints || 10) : null;
+    const plannedTotal = (quiz as any).assessment ? ((quiz as any).assessment.totalPoints || 10) : null;
 
     const last = await this.prisma.sessionPreparedQuestion.findFirst({
       where: { quizId },
@@ -350,7 +316,7 @@ export class PreparedQuizService implements OnModuleDestroy {
   /** Remove a question from a quiz group and rebalance points to match planned totalPoints */
   async removeQuestion(sessionId: string, quizId: string, questionId: string) {
     const quiz = await this.assertQuizExists(sessionId, quizId);
-    const plannedTotal = quiz.assessment ? (quiz.assessment.totalPoints || 10) : null;
+    const plannedTotal = (quiz as any).assessment ? ((quiz as any).assessment.totalPoints || 10) : null;
 
     await this.prisma.sessionPreparedQuestion.deleteMany({
       where: { quizId, questionId },
@@ -382,7 +348,7 @@ export class PreparedQuizService implements OnModuleDestroy {
       next.set(item.questionId, item.points);
     }
 
-    const plannedTotal = quiz.assessment ? (quiz.assessment.totalPoints || 10) : null;
+    const plannedTotal = (quiz as any).assessment ? ((quiz as any).assessment.totalPoints || 10) : null;
     if (plannedTotal !== null) {
       const total = [...next.values()].reduce((sum, p) => sum + p, 0);
       if (total > plannedTotal) {

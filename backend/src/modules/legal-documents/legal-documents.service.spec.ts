@@ -19,7 +19,14 @@ describe('LegalDocumentsService', () => {
         update: jest.fn(),
       },
     };
-    service = new LegalDocumentsService(mockPrisma);
+    const mockCache = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(undefined),
+      del: jest.fn().mockResolvedValue(undefined),
+      delByPattern: jest.fn().mockResolvedValue(undefined),
+      getOrSet: jest.fn().mockImplementation((_k, fn) => fn()),
+    };
+    service = new LegalDocumentsService(mockPrisma as any, mockCache as any);
   });
 
   it('findAll should filter by category, domain, instrumentType, and paginate', async () => {

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuditService } from './audit.service';
@@ -65,5 +65,22 @@ export class AuditController {
   @ApiParam({ name: 'entityId', type: String })
   async byEntity(@Param('entity') entity: string, @Param('entityId') entityId: string) {
     return this.auditService.findByEntity(entity, entityId);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update an audit log entry (reason / description)' })
+  @ApiParam({ name: 'id', type: String })
+  async update(
+    @Param('id') id: string,
+    @Body() body: { reason?: string; action?: string },
+  ) {
+    return this.auditService.update(id, body);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete an audit log entry' })
+  @ApiParam({ name: 'id', type: String })
+  async remove(@Param('id') id: string) {
+    return this.auditService.remove(id);
   }
 }

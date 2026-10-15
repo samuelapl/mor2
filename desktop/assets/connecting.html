@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoR LMS Desktop</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      user-select: none;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 480px;
+      padding: 36px 32px;
+      text-align: center;
+    }
+    .logo-badge {
+      width: 68px;
+      height: 68px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+    }
+    .logo-badge svg {
+      width: 36px;
+      height: 36px;
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 2;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .url-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      word-break: break-all;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .spinner-bar {
+      width: 100%;
+      height: 4px;
+      background: #334155;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .spinner-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 40%;
+      background: linear-gradient(90deg, #3b82f6, #818cf8);
+      border-radius: 9999px;
+      animation: indeterminate 1.4s infinite ease-in-out;
+    }
+    @keyframes indeterminate {
+      0% { left: -40%; width: 40%; }
+      50% { left: 40%; width: 50%; }
+      100% { left: 100%; width: 40%; }
+    }
+    .status-text {
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #f59e0b;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    button {
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+    .btn-primary {
+      background: #3b82f6;
+      color: #ffffff;
+      flex: 1;
+    }
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+    .btn-secondary {
+      background: #334155;
+      color: #f1f5f9;
+    }
+    .btn-secondary:hover {
+      background: #475569;
+    }
+    .settings-panel {
+      display: none;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #334155;
+      text-align: left;
+    }
+    .settings-panel.open {
+      display: block;
+    }
+    label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 6px;
+    }
+    input[type="text"] {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 13px;
+      color: #f8fafc;
+      outline: none;
+      margin-bottom: 12px;
+    }
+    input[type="text"]:focus {
+      border-color: #3b82f6;
+    }
+    .help-hint {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 12px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-badge">
+      <svg viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    </div>
+
+    <h1>Connecting to MoR LMS</h1>
+    <p class="subtitle">Waiting for the MoR LMS web application to respond. The desktop client updates automatically with your web platform.</p>
+
+    <div class="spinner-bar"></div>
+
+    <div class="url-box">
+      <span id="display-url">http://localhost:3000</span>
+      <span style="font-size: 10px; color: #64748b;">Target Server</span>
+    </div>
+
+    <div class="status-text">
+      <span class="status-dot"></span>
+      <span id="status-message">Checking server status and auto-connecting...</span>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn-primary" id="btn-retry" onclick="triggerRetry()">Retry Now</button>
+      <button class="btn-secondary" onclick="toggleSettings()">Change Server URL</button>
+    </div>
+
+    <div class="settings-panel" id="settings-panel">
+      <label for="server-input">MoR LMS Web Server URL</label>
+      <input type="text" id="server-input" placeholder="e.g. http://localhost:3000 or https://elms.mor.gov.et" />
+      <button class="btn-primary" style="width: 100%;" onclick="saveServerUrl()">Save & Reconnect</button>
+    </div>
+
+    <p class="help-hint">Make sure the web application server is started (e.g. <code>npm run dev</code> or production server).</p>
+  </div>
+
+  <script>
+    let pollInterval = null;
+
+    async function loadCurrentUrl() {
+      if (window.electronAPI && window.electronAPI.getServerUrl) {
+        const url = await window.electronAPI.getServerUrl();
+        document.getElementById('display-url').textContent = url;
+        document.getElementById('server-input').value = url;
+      }
+    }
+
+    async function triggerRetry() {
+      const status = document.getElementById('status-message');
+      status.textContent = 'Connecting to server...';
+      if (window.electronAPI && window.electronAPI.retryConnection) {
+        const ok = await window.electronAPI.retryConnection();
+        if (!ok) {
+          status.textContent = 'Server not reachable yet. Retrying automatically...';
+        }
+      }
+    }
+
+    async function saveServerUrl() {
+      const input = document.getElementById('server-input').value.trim();
+      if (!input) return;
+      if (window.electronAPI && window.electronAPI.setServerUrl) {
+        await window.electronAPI.setServerUrl(input);
+        document.getElementById('display-url').textContent = input;
+        toggleSettings();
+        triggerRetry();
+      }
+    }
+
+    function toggleSettings() {
+      const panel = document.getElementById('settings-panel');
+      panel.classList.toggle('open');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadCurrentUrl();
+      // Auto-poll retry every 2 seconds
+      pollInterval = setInterval(triggerRetry, 2000);
+    });
+  </script>
+</body>
+</html>
+

@@ -20,4 +20,3 @@ export class SubmitAssessmentDto {
   @IsBoolean()
   isAuto?: boolean;
 }
-

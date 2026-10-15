@@ -38,9 +38,11 @@ import { PermissionsGuard } from './modules/permissions/guards/permissions.guard
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { SessionReschedulerModule } from './modules/session-rescheduler/session-rescheduler.module';
 import { LandingPageModule } from './modules/landing-page/landing-page.module';
+import { CacheModule } from './common/cache';
 
 @Module({
   imports: [
+    CacheModule,
     EventEmitterModule.forRoot(),
     ThrottlerModule.forRoot({
       throttlers: [

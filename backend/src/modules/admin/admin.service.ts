@@ -2,81 +2,95 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@config/prisma.service';
 import { DateRangeDto } from './dto';
 import { FilesService } from '@modules/files/files.service';
+import { CacheService } from '@common/cache';
 
 @Injectable()
 export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly filesService: FilesService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async getDashboardStats(dto: DateRangeDto) {
-    const [totalUsers, totalCourses, totalEnrollments, totalSessions] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.course.count({ where: { deletedAt: null } }),
-      this.prisma.enrollment.count(),
-      this.prisma.liveSession.count({ where: { deletedAt: null } }),
-    ]);
+    const cacheKey = `admin:stats:${dto.from || 'none'}:${dto.to || 'none'}`;
+    return this.cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const [totalUsers, totalCourses, totalEnrollments, totalSessions] = await Promise.all([
+          this.prisma.user.count(),
+          this.prisma.course.count({ where: { deletedAt: null } }),
+          this.prisma.enrollment.count(),
+          this.prisma.liveSession.count({ where: { deletedAt: null } }),
+        ]);
 
-    const [publishedCourses, pendingApprovals, activeEnrollments, certificatesIssued] =
-      await Promise.all([
-        this.prisma.course.count({ where: { status: 'PUBLISHED', deletedAt: null } }),
-        this.prisma.course.count({ where: { status: 'PENDING_APPROVAL', deletedAt: null } }),
-        this.prisma.enrollment.count({ where: { status: 'ACTIVE' } }),
-        this.prisma.certificate.count(),
-      ]);
+        const [publishedCourses, pendingApprovals, activeEnrollments, certificatesIssued] =
+          await Promise.all([
+            this.prisma.course.count({ where: { status: 'PUBLISHED', deletedAt: null } }),
+            this.prisma.course.count({ where: { status: 'PENDING_APPROVAL', deletedAt: null } }),
+            this.prisma.enrollment.count({ where: { status: 'ACTIVE' } }),
+            this.prisma.certificate.count(),
+          ]);
 
-    const roleCounts = await this.prisma.userRole.groupBy({
-      by: ['role'],
-      _count: { _all: true },
-    });
+        const roleCounts = await this.prisma.userRole.groupBy({
+          by: ['role'],
+          _count: { _all: true },
+        });
 
-    const recentUserJoins = await this.prisma.user.count({
-      where: {
-        createdAt: {
-          gte: this.fromDate(dto.from),
-          lte: this.toDate(dto.to),
-        },
-      },
-    });
+        const recentUserJoins = await this.prisma.user.count({
+          where: {
+            createdAt: {
+              gte: this.fromDate(dto.from),
+              lte: this.toDate(dto.to),
+            },
+          },
+        });
 
-    const recentEnrollments = await this.prisma.enrollment.count({
-      where: {
-        createdAt: {
-          gte: this.fromDate(dto.from),
-          lte: this.toDate(dto.to),
-        },
-      },
-    });
+        const recentEnrollments = await this.prisma.enrollment.count({
+          where: {
+            createdAt: {
+              gte: this.fromDate(dto.from),
+              lte: this.toDate(dto.to),
+            },
+          },
+        });
 
-    return {
-      totals: {
-        users: totalUsers,
-        courses: totalCourses,
-        enrollments: totalEnrollments,
-        liveSessions: totalSessions,
+        return {
+          totals: {
+            users: totalUsers,
+            courses: totalCourses,
+            enrollments: totalEnrollments,
+            liveSessions: totalSessions,
+          },
+          statuses: {
+            publishedCourses,
+            pendingApprovals,
+            activeEnrollments,
+            certificatesIssued,
+          },
+          roles: roleCounts.map((r) => ({ role: r.role, count: r._count._all })),
+          periodActivity: {
+            newUsers: recentUserJoins,
+            newEnrollments: recentEnrollments,
+          },
+        };
       },
-      statuses: {
-        publishedCourses,
-        pendingApprovals,
-        activeEnrollments,
-        certificatesIssued,
-      },
-      roles: roleCounts.map((r) => ({ role: r.role, count: r._count._all })),
-      periodActivity: {
-        newUsers: recentUserJoins,
-        newEnrollments: recentEnrollments,
-      },
-    };
+      60, // 60 seconds
+    );
   }
 
   async getRoleDistribution() {
-    const roleCounts = await this.prisma.userRole.groupBy({
-      by: ['role'],
-      _count: { _all: true },
-    });
-
-    return roleCounts.map((r) => ({ role: r.role, count: r._count._all }));
+    return this.cacheService.getOrSet(
+      'admin:roles:distribution',
+      async () => {
+        const roleCounts = await this.prisma.userRole.groupBy({
+          by: ['role'],
+          _count: { _all: true },
+        });
+        return roleCounts.map((r) => ({ role: r.role, count: r._count._all }));
+      },
+      300, // 5 minutes
+    );
   }
 
   async getSystemHealth() {

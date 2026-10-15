@@ -34,16 +34,7 @@ export default function LandingPage() {
   const { config, resolveText } = useLandingConfig();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [stats, setStats] = useState<LandingStats | null>(null);
-  const [isDesktop, setIsDesktop] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return Boolean(
-      (window as any).electronAPI?.isDesktop ||
-      (window as any).isElectron ||
-      /electron/i.test(navigator.userAgent) ||
-      document.documentElement.getAttribute('data-is-desktop') === 'true' ||
-      document.documentElement.classList.contains('is-electron'),
-    );
-  });
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     if (
