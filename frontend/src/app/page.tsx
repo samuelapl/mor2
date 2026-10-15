@@ -132,12 +132,7 @@ export default function LandingPage() {
 
             <h1 className="mt-8 font-display text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
               {resolveText(config.hero?.headlineEn, config.hero?.headlineAm) || (
-                <>
-                  {t('landingPage.learningManagementSystemFor')}{' '}
-                  <span className="bg-gradient-to-r from-info via-info to-warning bg-clip-text text-transparent">
-                    {t('landingPage.ministryOfRevenues')}
-                  </span>
-                </>
+                <span>{t('landingPage.learningManagementSystemFor')}</span>
               )}
             </h1>
 
