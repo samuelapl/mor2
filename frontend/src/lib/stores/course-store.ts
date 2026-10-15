@@ -107,17 +107,33 @@ export type CourseStore = CourseState & CourseActions;
 export const useCourseStore = create<CourseStore>()((set, get) => ({
   courses: [],
 
-  courseById: (courseId) => get().courses.find((course) => course.id === courseId),
+  courseById: (courseId) =>
+    get().courses.find(
+      (course) =>
+        course.id === courseId ||
+        course.code?.toLowerCase() === courseId?.toLowerCase(),
+    ),
 
   refreshCourse: async (courseId) => {
     try {
       const fresh = courseFromDetail(await fetchCourseDetail(courseId));
-      set((state) => ({
-        courses: state.courses.map((c) =>
-          // Enrollment ids are loaded separately; keep the ones already known.
-          c.id === courseId ? { ...fresh, enrolledLearnerIds: c.enrolledLearnerIds } : c,
-        ),
-      }));
+      set((state) => {
+        const index = state.courses.findIndex(
+          (c) =>
+            c.id === fresh.id ||
+            c.id === courseId ||
+            c.code?.toLowerCase() === courseId?.toLowerCase(),
+        );
+        if (index === -1) {
+          return { courses: [...state.courses, fresh] };
+        }
+        const updated = [...state.courses];
+        updated[index] = {
+          ...fresh,
+          enrolledLearnerIds: updated[index]!.enrolledLearnerIds,
+        };
+        return { courses: updated };
+      });
     } catch {
       // Best effort: the next full reload picks it up.
     }
@@ -532,5 +548,13 @@ export const useCourseStore = create<CourseStore>()((set, get) => ({
 /** Memoized `courseById` that re-renders the caller when `courses` changes. */
 export function useCourseById(): (courseId: string) => Course | undefined {
   const courses = useCourseStore((s) => s.courses);
-  return useCallback((courseId: string) => courses.find((course) => course.id === courseId), [courses]);
+  return useCallback(
+    (courseId: string) =>
+      courses.find(
+        (course) =>
+          course.id === courseId ||
+          course.code?.toLowerCase() === courseId?.toLowerCase(),
+      ),
+    [courses],
+  );
 }

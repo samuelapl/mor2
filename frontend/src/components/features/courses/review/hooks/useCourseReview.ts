@@ -86,7 +86,8 @@ export function useCourseReview(courseId: string) {
     setAssessmentsLoading(true);
     (async () => {
       try {
-        const list = await fetchCourseAssessments(courseId);
+        const targetId = course?.id ?? courseId;
+        const list = await fetchCourseAssessments(targetId);
         const details = await Promise.all(list.map((item) => fetchAssessmentWithAnswers(item.id).catch(() => null)));
         if (!cancelled) {
           // The listing carries type/moduleId/lessonId even when the detail call omits them.
@@ -102,7 +103,7 @@ export function useCourseReview(courseId: string) {
     return () => {
       cancelled = true;
     };
-  }, [courseId, reloadKey]);
+  }, [courseId, course?.id, reloadKey]);
 
   const [selectedNode, setSelectedNodeState] = useState<ReviewNode>({ type: 'OVERVIEW' });
 

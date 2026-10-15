@@ -228,7 +228,7 @@ export class CoursesService {
     }
 
     const enrollment = await this.prisma.enrollment.findUnique({
-      where: { userId_courseId: { userId: user.id, courseId } },
+      where: { userId_courseId: { userId: user.id, courseId: course.id } },
       select: { status: true },
     });
     if (enrollment && course.status === CourseStatus.PUBLISHED) return;

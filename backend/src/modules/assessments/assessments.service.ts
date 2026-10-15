@@ -123,8 +123,20 @@ export class AssessmentsService {
   /* ------------------------------------------------------------------ */
 
   async findByCourse(courseId: string, isLearner = false, currentUserId?: string) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId);
+    let resolvedId = courseId;
+    if (!isUuid) {
+      const course = await this.prisma.course.findFirst({
+        where: { code: { equals: courseId, mode: 'insensitive' }, deletedAt: null },
+        select: { id: true },
+      });
+      if (course) {
+        resolvedId = course.id;
+      }
+    }
+
     const assessments = await this.prisma.assessment.findMany({
-      where: { courseId },
+      where: { courseId: resolvedId },
       orderBy: { createdAt: 'asc' },
       include: getAssessmentInclude(isLearner, currentUserId),
     });
