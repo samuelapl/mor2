@@ -4,85 +4,98 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
+import { CacheService } from '@common/cache';
 import {
   CreateLegalDocumentDto,
   QueryLegalDocumentDto,
   UpdateLegalDocumentDto,
 } from './dto';
 
+const LAWS_TTL_SECONDS = 3600; // 1 hour
+
 @Injectable()
 export class LegalDocumentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async findAll(query?: QueryLegalDocumentDto) {
-    const page = query?.page && query.page > 0 ? query.page : 1;
-    const limit = query?.limit && query.limit > 0 ? query.limit : 20;
-    const skip = (page - 1) * limit;
+    const cacheKey = `laws:list:${JSON.stringify(query || {})}`;
+    return this.cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const page = query?.page && query.page > 0 ? query.page : 1;
+        const limit = query?.limit && query.limit > 0 ? query.limit : 20;
+        const skip = (page - 1) * limit;
 
-    const where: Prisma.LegalDocumentWhereInput = {
-      deletedAt: null,
-    };
+        const where: Prisma.LegalDocumentWhereInput = {
+          deletedAt: null,
+        };
 
-    if (query?.categoryId) {
-      where.categoryId = query.categoryId;
-    }
+        if (query?.categoryId) {
+          where.categoryId = query.categoryId;
+        }
 
-    if (query?.domain || query?.instrumentType) {
-      where.category = {
-        ...(query.domain ? { domain: query.domain } : {}),
-        ...(query.instrumentType ? { instrumentType: query.instrumentType } : {}),
-      };
-    }
+        if (query?.domain || query?.instrumentType) {
+          where.category = {
+            ...(query.domain ? { domain: query.domain } : {}),
+            ...(query.instrumentType ? { instrumentType: query.instrumentType } : {}),
+          };
+        }
 
-    if (query?.status) {
-      where.status = query.status;
-    }
+        if (query?.status) {
+          where.status = query.status;
+        }
 
-    if (query?.yearIssued) {
-      where.yearIssued = query.yearIssued;
-    }
+        if (query?.yearIssued) {
+          where.yearIssued = query.yearIssued;
+        }
 
-    if (query?.search?.trim()) {
-      const term = query.search.trim();
-      where.OR = [
-        { documentNumber: { contains: term, mode: 'insensitive' } },
-        { titleEn: { contains: term, mode: 'insensitive' } },
-        { titleAm: { contains: term, mode: 'insensitive' } },
-      ];
-    }
+        if (query?.search?.trim()) {
+          const term = query.search.trim();
+          where.OR = [
+            { documentNumber: { contains: term, mode: 'insensitive' } },
+            { titleEn: { contains: term, mode: 'insensitive' } },
+            { titleAm: { contains: term, mode: 'insensitive' } },
+          ];
+        }
 
-    const [total, data] = await Promise.all([
-      this.prisma.legalDocument.count({ where }),
-      this.prisma.legalDocument.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: [
-          { yearIssued: { sort: 'desc', nulls: 'last' } },
-          { documentNumber: 'asc' },
-          { createdAt: 'desc' },
-        ],
-        include: {
-          category: true,
-          createdBy: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
+        const [total, data] = await Promise.all([
+          this.prisma.legalDocument.count({ where }),
+          this.prisma.legalDocument.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: [
+              { yearIssued: { sort: 'desc', nulls: 'last' } },
+              { documentNumber: 'asc' },
+              { createdAt: 'desc' },
+            ],
+            include: {
+              category: true,
+              createdBy: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                },
+              },
             },
-          },
-        },
-      }),
-    ]);
+          }),
+        ]);
 
-    return {
-      data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+        return {
+          data,
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        };
+      },
+      LAWS_TTL_SECONDS,
+    );
   }
 
   async findOne(id: string) {
@@ -117,7 +130,7 @@ export class LegalDocumentsService {
       throw new NotFoundException(`Law category with ID ${dto.categoryId} not found`);
     }
 
-    return this.prisma.legalDocument.create({
+    const created = await this.prisma.legalDocument.create({
       data: {
         categoryId: dto.categoryId,
         documentNumber: dto.documentNumber.trim(),
@@ -145,6 +158,8 @@ export class LegalDocumentsService {
         },
       },
     });
+    await this.cacheService.delByPattern('laws:*');
+    return created;
   }
 
   async update(id: string, dto: UpdateLegalDocumentDto) {
@@ -159,7 +174,7 @@ export class LegalDocumentsService {
       }
     }
 
-    return this.prisma.legalDocument.update({
+    const updated = await this.prisma.legalDocument.update({
       where: { id },
       data: {
         categoryId: dto.categoryId,
@@ -191,6 +206,8 @@ export class LegalDocumentsService {
         },
       },
     });
+    await this.cacheService.delByPattern('laws:*');
+    return updated;
   }
 
   async remove(id: string) {
@@ -203,6 +220,7 @@ export class LegalDocumentsService {
       },
     });
 
+    await this.cacheService.delByPattern('laws:*');
     return {
       success: true,
       message: 'Legal document deleted successfully',

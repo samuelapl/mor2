@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@config/prisma.service';
 import { AuditService } from '@modules/audit/audit.service';
+import { CacheService } from '@common/cache';
 import {
   DEFAULT_LANDING_PAGE_CONFIG,
   LandingPageConfig,
@@ -10,22 +11,25 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const SETTING_KEY = 'landing_page_config';
+const CACHE_KEY = 'landing:public:config';
+const CACHE_TTL_SECONDS = 86400; // 24 hours (invalidated on update/reset)
 
 @Injectable()
 export class LandingPageService {
   private readonly logger = new Logger(LandingPageService.name);
-  private memoryCache: LandingPageConfig | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async getPublicConfig(): Promise<LandingPageConfig> {
-    if (this.memoryCache) {
-      return this.memoryCache;
-    }
-    return this.loadAndCacheConfig();
+    return this.cacheService.getOrSet(
+      CACHE_KEY,
+      () => this.loadAndCacheConfig(),
+      CACHE_TTL_SECONDS,
+    );
   }
 
   async getAdminConfig(): Promise<LandingPageConfig> {
@@ -92,7 +96,7 @@ export class LandingPageService {
       },
     });
 
-    this.memoryCache = merged;
+    await this.cacheService.set(CACHE_KEY, merged, CACHE_TTL_SECONDS);
 
     try {
       await this.auditService.record({
@@ -127,7 +131,7 @@ export class LandingPageService {
       },
     });
 
-    this.memoryCache = defaultConfig;
+    await this.cacheService.set(CACHE_KEY, defaultConfig, CACHE_TTL_SECONDS);
 
     try {
       await this.auditService.record({
@@ -201,7 +205,6 @@ export class LandingPageService {
       });
 
       if (!setting || !setting.value) {
-        this.memoryCache = DEFAULT_LANDING_PAGE_CONFIG;
         return DEFAULT_LANDING_PAGE_CONFIG;
       }
 
@@ -244,11 +247,9 @@ export class LandingPageService {
         },
       };
 
-      this.memoryCache = merged;
       return merged;
     } catch (err) {
       this.logger.error('Failed to load landing page config from database. Falling back to defaults.', err);
-      this.memoryCache = DEFAULT_LANDING_PAGE_CONFIG;
       return DEFAULT_LANDING_PAGE_CONFIG;
     }
   }

@@ -1,7 +1,13 @@
-const { contextBridge } = require("electron");
+const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
   isDesktop: true,
+  platform: process.platform,
+  version: "1.2.0",
+  setServerUrl: (url) => ipcRenderer.invoke("set-server-url", url),
+  getServerUrl: () => ipcRenderer.invoke("get-server-url"),
+  retryConnection: () => ipcRenderer.invoke("retry-connection"),
+  reload: () => ipcRenderer.invoke("reload-app"),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

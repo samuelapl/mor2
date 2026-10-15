@@ -55,10 +55,17 @@ function buildPrisma(news: Record<string, unknown>) {
 function buildService(news: Record<string, unknown>) {
   const prisma = buildPrisma(news);
   const notifications = { sendToMany: jest.fn().mockResolvedValue([]) };
-  const service = new NewsService(prisma as any, {} as any, notifications as any);
+  const mockCache = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(undefined),
+    del: jest.fn().mockResolvedValue(undefined),
+    delByPattern: jest.fn().mockResolvedValue(undefined),
+    getOrSet: jest.fn().mockImplementation((_k, fn) => fn()),
+  };
+  const service = new NewsService(prisma as any, {} as any, notifications as any, mockCache as any);
   // adminGet re-reads with includes; the workflow tests only care about the write.
   jest.spyOn(service, 'adminGet').mockResolvedValue({} as any);
-  return { service, prisma, notifications };
+  return { service, prisma, notifications, cache: mockCache };
 }
 
 describe('NewsService editing rules', () => {

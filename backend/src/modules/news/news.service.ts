@@ -20,6 +20,7 @@ import { AuthenticatedUser } from '@common/interfaces';
 import { buildPaginatedResponse, buildPaginationArgs } from '@common/utils';
 import { FilesService } from '@modules/files/files.service';
 import { NotificationsService } from '@modules/notifications/notifications.service';
+import { CacheService } from '@common/cache';
 import {
   AdminListNewsQueryDto,
   CreateNewsDto,
@@ -84,7 +85,12 @@ export class NewsService {
     private readonly prisma: PrismaService,
     private readonly filesService: FilesService,
     private readonly notificationsService: NotificationsService,
+    private readonly cacheService: CacheService,
   ) {}
+
+  private async invalidateCache(): Promise<void> {
+    await this.cacheService.delByPattern('news:*');
+  }
 
   // ── Public ───────────────────────────────────────────
 
@@ -93,78 +99,102 @@ export class NewsService {
       page: query.page,
       limit: query.limit ?? DEFAULT_PAGE_SIZE,
     });
-    const where: Prisma.NewsWhereInput = {
-      ...PUBLISHED_WHERE,
-      ...(query.category && { category: query.category }),
-      ...(query.featured !== undefined && { isFeatured: query.featured }),
-      ...this.searchWhere(query.search),
+
+    const executeQuery = async () => {
+      const where: Prisma.NewsWhereInput = {
+        ...PUBLISHED_WHERE,
+        ...(query.category && { category: query.category }),
+        ...(query.featured !== undefined && { isFeatured: query.featured }),
+        ...this.searchWhere(query.search),
+      };
+
+      const [rows, total] = await Promise.all([
+        this.prisma.news.findMany({
+          where,
+          select: PUBLIC_CARD_SELECT,
+          orderBy: [{ isFeatured: 'desc' }, { publishedAt: 'desc' }],
+          skip,
+          take: limit,
+        }),
+        this.prisma.news.count({ where }),
+      ]);
+
+      const stats = await this.statsFor(
+        rows.map((r) => r.id),
+        userId,
+      );
+      return buildPaginatedResponse(
+        rows.map((r) => this.toPublicCard(r, stats.get(r.id)!)),
+        total,
+        page,
+        limit,
+      );
     };
 
-    const [rows, total] = await Promise.all([
-      this.prisma.news.findMany({
-        where,
-        select: PUBLIC_CARD_SELECT,
-        orderBy: [{ isFeatured: 'desc' }, { publishedAt: 'desc' }],
-        skip,
-        take: limit,
-      }),
-      this.prisma.news.count({ where }),
-    ]);
+    if (userId) {
+      return executeQuery();
+    }
 
-    const stats = await this.statsFor(
-      rows.map((r) => r.id),
-      userId,
-    );
-    return buildPaginatedResponse(
-      rows.map((r) => this.toPublicCard(r, stats.get(r.id)!)),
-      total,
-      page,
-      limit,
-    );
+    const cacheKey = `news:published:${page}:${limit}:${query.category || ''}:${query.featured ?? ''}:${query.search || ''}`;
+    return this.cacheService.getOrSet(cacheKey, executeQuery, 600);
   }
 
   /** Featured posts first, topped up with the latest ones, for the landing page and dashboards. */
   async listFeatured() {
-    const featured = await this.prisma.news.findMany({
-      where: { ...PUBLISHED_WHERE, isFeatured: true },
-      select: PUBLIC_CARD_SELECT,
-      orderBy: { publishedAt: 'desc' },
-      take: MAX_FEATURED_NEWS,
-    });
-    const latest =
-      featured.length < MAX_FEATURED_NEWS
-        ? await this.prisma.news.findMany({
-            where: { ...PUBLISHED_WHERE, id: { notIn: featured.map((f) => f.id) } },
-            select: PUBLIC_CARD_SELECT,
-            orderBy: { publishedAt: 'desc' },
-            take: MAX_FEATURED_NEWS - featured.length,
-          })
-        : [];
+    return this.cacheService.getOrSet(
+      'news:featured:list',
+      async () => {
+        const featured = await this.prisma.news.findMany({
+          where: { ...PUBLISHED_WHERE, isFeatured: true },
+          select: PUBLIC_CARD_SELECT,
+          orderBy: { publishedAt: 'desc' },
+          take: MAX_FEATURED_NEWS,
+        });
+        const latest =
+          featured.length < MAX_FEATURED_NEWS
+            ? await this.prisma.news.findMany({
+                where: { ...PUBLISHED_WHERE, id: { notIn: featured.map((f) => f.id) } },
+                select: PUBLIC_CARD_SELECT,
+                orderBy: { publishedAt: 'desc' },
+                take: MAX_FEATURED_NEWS - featured.length,
+              })
+            : [];
 
-    const rows = [...featured, ...latest];
-    const stats = await this.statsFor(rows.map((r) => r.id));
-    return rows.map((r) => this.toPublicCard(r, stats.get(r.id)!));
+        const rows = [...featured, ...latest];
+        const stats = await this.statsFor(rows.map((r) => r.id));
+        return rows.map((r) => this.toPublicCard(r, stats.get(r.id)!));
+      },
+      1800,
+    );
   }
 
   async getPublishedBySlug(slug: string, userId?: string) {
-    const news = await this.prisma.news.findFirst({
-      where: { ...PUBLISHED_WHERE, slug },
-      select: {
-        ...PUBLIC_CARD_SELECT,
-        images: {
-          select: { id: true, url: true, caption: true, sortOrder: true },
-          orderBy: IMAGES_ORDER,
+    const executeQuery = async () => {
+      const news = await this.prisma.news.findFirst({
+        where: { ...PUBLISHED_WHERE, slug },
+        select: {
+          ...PUBLIC_CARD_SELECT,
+          images: {
+            select: { id: true, url: true, caption: true, sortOrder: true },
+            orderBy: IMAGES_ORDER,
+          },
         },
-      },
-    });
-    if (!news) throw new NotFoundException('News not found');
+      });
+      if (!news) throw new NotFoundException('News not found');
 
-    const stats = (await this.statsFor([news.id], userId)).get(news.id)!;
-    return {
-      ...this.toPublicCard(news, stats),
-      content: news.content,
-      images: news.images,
+      const stats = (await this.statsFor([news.id], userId)).get(news.id)!;
+      return {
+        ...this.toPublicCard(news, stats),
+        content: news.content,
+        images: news.images,
+      };
     };
+
+    if (userId) {
+      return executeQuery();
+    }
+
+    return this.cacheService.getOrSet(`news:slug:${slug}`, executeQuery, 1800);
   }
 
   // ── Admin: read ──────────────────────────────────────
@@ -239,6 +269,7 @@ export class NewsService {
         },
       }),
     );
+    await this.invalidateCache();
     return this.adminGet(news.id);
   }
 
@@ -251,6 +282,7 @@ export class NewsService {
       where: { id },
       data: { ...this.normalizeFields(dto), updatedById: user.id },
     });
+    await this.invalidateCache();
     return this.adminGet(id);
   }
 
@@ -262,6 +294,7 @@ export class NewsService {
       where: { id },
       data: { deletedAt: new Date(), isFeatured: false, updatedById: user.id },
     });
+    await this.invalidateCache();
     return { message: 'News deleted' };
   }
 
@@ -292,6 +325,7 @@ export class NewsService {
         data: { coverImageUrl: url, updatedById: user.id },
       });
       await this.filesService.removeByUrl(news.coverImageUrl);
+      await this.invalidateCache();
       return { coverImageUrl: url };
     }
 
@@ -299,9 +333,11 @@ export class NewsService {
       where: { newsId: id },
       _max: { sortOrder: true },
     });
-    return this.prisma.newsImage.create({
+    const createdImage = await this.prisma.newsImage.create({
       data: { newsId: id, url, sortOrder: (_max.sortOrder ?? -1) + 1 },
     });
+    await this.invalidateCache();
+    return createdImage;
   }
 
   async updateImage(user: AuthenticatedUser, id: string, imageId: string, dto: UpdateNewsImageDto) {
@@ -309,13 +345,15 @@ export class NewsService {
     this.assertCanEdit(user, news);
     await this.findImage(id, imageId);
 
-    return this.prisma.newsImage.update({
+    const updated = await this.prisma.newsImage.update({
       where: { id: imageId },
       data: {
         ...(dto.caption !== undefined && { caption: dto.caption?.trim() || null }),
         ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
       },
     });
+    await this.invalidateCache();
+    return updated;
   }
 
   async deleteImage(user: AuthenticatedUser, id: string, imageId: string) {
@@ -325,6 +363,7 @@ export class NewsService {
 
     await this.prisma.newsImage.delete({ where: { id: imageId } });
     await this.filesService.removeByUrl(image.url);
+    await this.invalidateCache();
     return { message: 'Image deleted' };
   }
 
@@ -375,6 +414,7 @@ export class NewsService {
       },
     });
 
+    await this.invalidateCache();
     if (firstPublish) this.notifyLearners(updated);
     return this.adminGet(id);
   }
@@ -386,6 +426,7 @@ export class NewsService {
       where: { id },
       data: { status: NewsStatus.ARCHIVED, isFeatured: false, updatedById: user.id },
     });
+    await this.invalidateCache();
     return this.adminGet(id);
   }
 
@@ -396,6 +437,7 @@ export class NewsService {
       where: { id },
       data: { status: NewsStatus.PUBLISHED, updatedById: user.id },
     });
+    await this.invalidateCache();
     return this.adminGet(id);
   }
 
@@ -418,6 +460,7 @@ export class NewsService {
       where: { id },
       data: { isFeatured, updatedById: user.id },
     });
+    await this.invalidateCache();
     return this.adminGet(id);
   }
 

@@ -1,197 +1,208 @@
-const { app, BrowserWindow, Menu } = require("electron");
-const { spawn } = require("child_process");
+const { app, BrowserWindow, Menu, ipcMain, shell, session } = require("electron");
 const path = require("path");
+const fs = require("fs");
 const http = require("http");
-const net = require("net");
+const https = require("https");
 
-let mainWindow;
-let nextServer;
-let activeServerUrl = "http://127.0.0.1:3005";
+let mainWindow = null;
+let currentTargetUrl = "http://localhost:3000";
+let isConnected = false;
 
-// Check if a specific TCP port is free
-function isPortAvailable(port) {
-  return new Promise((resolve) => {
-    const tester = net.createServer();
-    tester.once("error", () => resolve(false));
-    tester.once("listening", () => {
-      tester.close(() => resolve(true));
-    });
-    tester.listen(port, "127.0.0.1");
-  });
+// Path to user-customizable server configuration file
+function getConfigFilePath() {
+  return path.join(app.getPath("userData"), "server-config.json");
 }
 
-// Find a free port starting from 3005 to avoid colliding with web dev server (3000) or backend (3001)
-async function findAvailablePort(startPort = 3005) {
-  let port = startPort;
-  while (port < 3200) {
-    if (await isPortAvailable(port)) {
-      return port;
+function loadConfiguredUrl() {
+  try {
+    // 1. Command-line flag --server-url=...
+    const arg = process.argv.find((a) => a.startsWith("--server-url="));
+    if (arg) {
+      return arg.split("=")[1].trim();
     }
-    port++;
+
+    // 2. Environment variables
+    if (process.env.LMS_WEB_URL) return process.env.LMS_WEB_URL.trim();
+    if (process.env.WEB_APP_URL) return process.env.WEB_APP_URL.trim();
+
+    // 3. User configuration file
+    const configPath = getConfigFilePath();
+    if (fs.existsSync(configPath)) {
+      const data = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+      if (data && typeof data.serverUrl === "string" && data.serverUrl.trim()) {
+        return data.serverUrl.trim();
+      }
+    }
+  } catch (err) {
+    console.warn("[Config] Could not read server-config.json:", err);
   }
-  return startPort;
+
+  // 4. Default web application URL
+  return "http://localhost:3000";
 }
 
-// Poll server until it responds to HTTP GET
-function waitForServer(url, retries = 90) {
-  return new Promise((resolve, reject) => {
-    const check = () => {
-      const request = http.get(url, (response) => {
-        response.resume();
-        resolve();
-      });
+function saveConfiguredUrl(url) {
+  try {
+    const configPath = getConfigFilePath();
+    const dir = path.dirname(configPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ serverUrl: url.trim(), updatedAt: new Date().toISOString() }, null, 2),
+      "utf-8"
+    );
+  } catch (err) {
+    console.error("[Config] Failed to save server-config.json:", err);
+  }
+}
 
-      request.on("error", () => {
-        if (retries <= 0) {
-          reject(new Error(`Server did not respond in time: ${url}`));
-          return;
+// Fast check if target web server is responding
+function checkServer(targetUrl) {
+  return new Promise((resolve) => {
+    try {
+      const parsed = new URL(targetUrl);
+      const client = parsed.protocol === "https:" ? https : http;
+      const req = client.get(
+        targetUrl,
+        {
+          timeout: 2500,
+          headers: {
+            "User-Agent": "MoR-LMS-Desktop-Client/1.2.0",
+          },
+        },
+        (res) => {
+          res.resume();
+          // Any standard HTTP status means server is up
+          resolve(res.statusCode >= 200 && res.statusCode < 500);
         }
-
-        retries--;
-        setTimeout(check, 350);
+      );
+      req.on("error", () => resolve(false));
+      req.on("timeout", () => {
+        req.destroy();
+        resolve(false);
       });
-    };
-
-    check();
+    } catch {
+      resolve(false);
+    }
   });
 }
 
-async function startNextServer() {
-  let nodePath;
-  let standalonePath;
+function getConnectingPageUrl() {
+  return `file://${path.join(__dirname, "assets", "connecting.html")}`;
+}
 
-  if (app.isPackaged) {
-    nodePath = path.join(process.resourcesPath, "node.exe");
-    standalonePath = path.join(
-      process.resourcesPath,
-      "standalone",
-      "server.js",
-    );
+async function navigateToTarget() {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+
+  const online = await checkServer(currentTargetUrl);
+  if (online) {
+    isConnected = true;
+    console.log(`[Desktop] Connected to live web platform: ${currentTargetUrl}`);
+    await mainWindow.loadURL(currentTargetUrl);
+    return true;
   } else {
-    nodePath =
-      process.platform === "win32"
-        ? "C:\\Program Files\\nodejs\\node.exe"
-        : "node";
-    standalonePath = path.join(
-      __dirname,
-      "..",
-      "frontend",
-      ".next",
-      "standalone",
-      "server.js",
-    );
+    isConnected = false;
+    const currentUrl = mainWindow.webContents.getURL();
+    if (!currentUrl.includes("connecting.html")) {
+      console.log(`[Desktop] Server unreachable at ${currentTargetUrl}. Showing connecting screen...`);
+      await mainWindow.loadURL(getConnectingPageUrl());
+    }
+    return false;
   }
-
-  // Assign a dedicated port (3005+) to prevent socket collision with web browser
-  const port = await findAvailablePort(3005);
-  activeServerUrl = `http://127.0.0.1:${port}`;
-
-  console.log("Node:", nodePath);
-  console.log("Next.js:", standalonePath);
-  console.log("Desktop Server URL:", activeServerUrl);
-
-  nextServer = spawn(nodePath, [standalonePath], {
-    cwd: path.dirname(standalonePath),
-    env: {
-      ...process.env,
-      NODE_ENV: "production",
-      PORT: String(port),
-      HOSTNAME: "127.0.0.1",
-    },
-    windowsHide: true,
-    stdio: ["ignore", "pipe", "pipe"],
-    shell: false,
-  });
-
-  nextServer.stdout.on("data", (data) => {
-    console.log(`[Next.js] ${data.toString().trim()}`);
-  });
-
-  nextServer.stderr.on("data", (data) => {
-    console.error(`[Next.js] ${data.toString().trim()}`);
-  });
-
-  nextServer.on("error", (error) => {
-    console.error("Failed to start Next.js:", error);
-  });
-
-  nextServer.on("exit", (code, signal) => {
-    console.log(`Next.js process exited. code=${code}, signal=${signal}`);
-  });
-
-  return activeServerUrl;
 }
 
-async function createWindow() {
-  const serverUrl = await startNextServer();
-  await waitForServer(serverUrl);
+function createWindow() {
+  currentTargetUrl = loadConfiguredUrl();
+
+  const iconPath =
+    process.platform === "win32"
+      ? path.join(__dirname, "assets", "mor-lms.ico")
+      : path.join(__dirname, "assets", "mor-lms.png");
 
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
-    minWidth: 1100,
-    minHeight: 700,
+    minWidth: 1024,
+    minHeight: 680,
+    title: "MoR LMS",
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     show: false,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#0f172a",
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       preload: path.join(__dirname, "preload.js"),
+      spellcheck: false,
     },
   });
 
-  // Reveal window only once page is ready to show (prevents white canvas flicker)
-  let shown = false;
+  // Smooth reveal
   mainWindow.once("ready-to-show", () => {
-    if (!shown) {
-      shown = true;
-      mainWindow.show();
-    }
+    mainWindow.show();
   });
 
-  // Fallback safety: make sure window displays within 3 seconds
-  setTimeout(() => {
-    if (mainWindow && !mainWindow.isDestroyed() && !shown) {
-      shown = true;
-      mainWindow.show();
-    }
-  }, 3000);
-
-  // Auto-recovery if load fails
-  mainWindow.webContents.on(
-    "did-fail-load",
-    (event, errorCode, errorDescription, validatedURL) => {
-      console.warn(
-        `[Electron] Page load failure: ${validatedURL} (${errorCode}: ${errorDescription})`,
-      );
-      if (errorCode !== -3) {
-        setTimeout(() => {
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.loadURL(activeServerUrl);
-          }
-        }, 1000);
+  // Handle external links: open mailto or foreign links in system default browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const parsed = new URL(url);
+      const current = new URL(currentTargetUrl);
+      if (parsed.origin !== current.origin) {
+        shell.openExternal(url);
+        return { action: "deny" };
       }
-    },
-  );
+    } catch {}
+    return { action: "allow" };
+  });
 
-  // Auto-recovery if render process crashes
-  mainWindow.webContents.on("render-process-gone", (event, details) => {
-    console.error("[Electron] Render process gone:", details);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.loadURL(activeServerUrl);
+  // If network drops or page crashes, show connection screen
+  mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription, validatedURL) => {
+    if (errorCode === -3) return; // Aborted by navigation
+    console.warn(`[Desktop] Page load failure: ${validatedURL} (${errorCode}: ${errorDescription})`);
+    if (isConnected) {
+      isConnected = false;
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.loadURL(getConnectingPageUrl());
+        }
+      }, 500);
     }
   });
 
-  await mainWindow.loadURL(serverUrl);
+  // Attempt initial connection
+  navigateToTarget();
 }
 
-app.whenReady().then(async () => {
-  Menu.setApplicationMenu(null);
-  try {
-    await createWindow();
-  } catch (error) {
-    console.error("Failed to start MoR LMS Desktop:", error);
+// ── IPC Handlers ─────────────────────────────────────────────────────────────
+ipcMain.handle("get-server-url", () => currentTargetUrl);
+
+ipcMain.handle("set-server-url", async (_event, newUrl) => {
+  if (!newUrl || typeof newUrl !== "string") return false;
+  let formatted = newUrl.trim();
+  if (!/^https?:\/\//i.test(formatted)) {
+    formatted = `http://${formatted}`;
   }
+  currentTargetUrl = formatted;
+  saveConfiguredUrl(formatted);
+  return navigateToTarget();
+});
+
+ipcMain.handle("retry-connection", async () => {
+  return navigateToTarget();
+});
+
+ipcMain.handle("reload-app", () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.reload();
+  }
+});
+
+// ── Application Lifecycle ───────────────────────────────────────────────────
+app.whenReady().then(() => {
+  Menu.setApplicationMenu(null); // Clean kiosk header, no default Electron menu
+
+  createWindow();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -200,28 +211,8 @@ app.whenReady().then(async () => {
   });
 });
 
-function killNextServer() {
-  if (nextServer) {
-    try {
-      if (process.platform === "win32" && nextServer.pid) {
-        spawn("taskkill", ["/pid", String(nextServer.pid), "/T", "/F"], {
-          windowsHide: true,
-        });
-      } else {
-        nextServer.kill();
-      }
-    } catch (e) {}
-    nextServer = null;
-  }
-}
-
 app.on("window-all-closed", () => {
-  killNextServer();
   if (process.platform !== "darwin") {
     app.quit();
   }
-});
-
-app.on("before-quit", () => {
-  killNextServer();
 });

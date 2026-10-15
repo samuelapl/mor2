@@ -4,15 +4,13 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  OnModuleDestroy,
 } from '@nestjs/common';
-import Redis from 'ioredis';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { PermissionsService } from '@modules/permissions/permissions.service';
 import { assertCanRunSession } from '@modules/live-sessions/session-access';
 import type { AuthenticatedUser } from '@common/interfaces';
-import { RedisConfig } from '@config/app.config';
+import { CacheService } from '@common/cache';
 import {
   CreatePreparedQuizDto,
   UpdatePreparedQuizDto,
@@ -29,44 +27,19 @@ function cacheKey(sessionId: string): string {
 }
 
 @Injectable()
-export class PreparedQuizService implements OnModuleDestroy {
+export class PreparedQuizService {
   private readonly logger = new Logger(PreparedQuizService.name);
-  private readonly redis: Redis;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly permissions: PermissionsService,
-  ) {
-    this.redis = new Redis({
-      host: RedisConfig.host,
-      port: RedisConfig.port,
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-      retryStrategy: () => null,
-      enableOfflineQueue: false,
-    });
-    this.redis.on('error', () => undefined);
-  }
-
-  async onModuleDestroy() {
-    await this.redis.quit().catch(() => this.redis.disconnect());
-  }
+    private readonly cacheService: CacheService,
+  ) {}
 
   // ─── Private helpers ───────────────────────────────────────────────────────
 
-  private async ensureConnected(): Promise<void> {
-    if (this.redis.status === 'wait' || this.redis.status === 'end') {
-      await this.redis.connect();
-    }
-  }
-
   private async invalidateCache(sessionId: string): Promise<void> {
-    try {
-      await this.ensureConnected();
-      await this.redis.del(cacheKey(sessionId));
-    } catch {
-      // Ignore
-    }
+    await this.cacheService.del(cacheKey(sessionId));
   }
 
   private async assertSessionExists(sessionId: string): Promise<void> {
@@ -204,34 +177,21 @@ export class PreparedQuizService implements OnModuleDestroy {
 
   /**
    * Return all prepared quiz groups for a session.
-   * Reads from Redis first; falls back to DB and repopulates cache on miss.
+   * Reads from cache first; falls back to DB and repopulates cache on miss.
    */
   async findAll(sessionId: string) {
     await this.assertSessionExists(sessionId);
 
-    try {
-      await this.ensureConnected();
-      const cached = await this.redis.get(cacheKey(sessionId));
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    } catch {
-      this.logger.warn(`Redis read failed for session ${sessionId} — falling back to DB`);
-    }
-
-    const rows = await this.prisma.sessionPreparedQuiz.findMany({
-      where: { sessionId },
-      orderBy: { order: 'asc' },
-      include: this.quizInclude,
-    });
-
-    try {
-      await this.redis.set(cacheKey(sessionId), JSON.stringify(rows), 'EX', CACHE_TTL_SECONDS);
-    } catch {
-      // Ignore
-    }
-
-    return rows;
+    return this.cacheService.getOrSet(
+      cacheKey(sessionId),
+      () =>
+        this.prisma.sessionPreparedQuiz.findMany({
+          where: { sessionId },
+          orderBy: { order: 'asc' },
+          include: this.quizInclude,
+        }),
+      CACHE_TTL_SECONDS,
+    );
   }
 
   /** Create a new named quiz group for a session */

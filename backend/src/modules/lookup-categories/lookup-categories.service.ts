@@ -6,26 +6,45 @@ import {
 } from '@nestjs/common';
 import { LookupCategoryType } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
+import { CacheService } from '@common/cache';
 import { CreateLookupCategoryDto, UpdateLookupCategoryDto } from './dto';
+
+const LOOKUP_TTL_SECONDS = 21600; // 6 hours
 
 @Injectable()
 export class LookupCategoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async findAll(type?: LookupCategoryType, includeInactive = false) {
-    return this.prisma.lookupCategory.findMany({
-      where: {
-        ...(type ? { type } : {}),
-        ...(includeInactive ? {} : { isActive: true }),
-      },
-      orderBy: [{ type: 'asc' }, { sortOrder: 'asc' }, { labelEn: 'asc' }],
-    });
+    const cacheKey = `lookup:all:${type || 'ALL'}:${includeInactive ? '1' : '0'}`;
+    return this.cacheService.getOrSet(
+      cacheKey,
+      () =>
+        this.prisma.lookupCategory.findMany({
+          where: {
+            ...(type ? { type } : {}),
+            ...(includeInactive ? {} : { isActive: true }),
+          },
+          orderBy: [{ type: 'asc' }, { sortOrder: 'asc' }, { labelEn: 'asc' }],
+        }),
+      LOOKUP_TTL_SECONDS,
+    );
   }
 
   async findOne(id: string) {
-    const item = await this.prisma.lookupCategory.findUnique({ where: { id } });
-    if (!item) throw new NotFoundException(`Lookup category ${id} not found`);
-    return item;
+    const cacheKey = `lookup:id:${id}`;
+    return this.cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const item = await this.prisma.lookupCategory.findUnique({ where: { id } });
+        if (!item) throw new NotFoundException(`Lookup category ${id} not found`);
+        return item;
+      },
+      LOOKUP_TTL_SECONDS,
+    );
   }
 
   async create(dto: CreateLookupCategoryDto) {
@@ -38,7 +57,7 @@ export class LookupCategoriesService {
         `A category with value "${value}" already exists for type ${dto.type}`,
       );
     }
-    return this.prisma.lookupCategory.create({
+    const created = await this.prisma.lookupCategory.create({
       data: {
         type: dto.type,
         value,
@@ -49,11 +68,13 @@ export class LookupCategoriesService {
         sortOrder: dto.sortOrder ?? 0,
       },
     });
+    await this.cacheService.delByPattern('lookup:*');
+    return created;
   }
 
   async update(id: string, dto: UpdateLookupCategoryDto) {
     await this.findOne(id);
-    return this.prisma.lookupCategory.update({
+    const updated = await this.prisma.lookupCategory.update({
       where: { id },
       data: {
         labelEn: dto.labelEn !== undefined ? dto.labelEn.trim() : undefined,
@@ -63,6 +84,8 @@ export class LookupCategoriesService {
         sortOrder: dto.sortOrder !== undefined ? dto.sortOrder : undefined,
       },
     });
+    await this.cacheService.delByPattern('lookup:*');
+    return updated;
   }
 
   async remove(id: string) {
@@ -75,6 +98,8 @@ export class LookupCategoriesService {
         );
       }
     }
-    return this.prisma.lookupCategory.delete({ where: { id } });
+    const deleted = await this.prisma.lookupCategory.delete({ where: { id } });
+    await this.cacheService.delByPattern('lookup:*');
+    return deleted;
   }
 }
