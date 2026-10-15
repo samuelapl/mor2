@@ -29,6 +29,28 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import PublicHeader from '@/components/layout/PublicHeader';
 import PublicFooter from '@/components/layout/PublicFooter';
 
+function renderHeroHeadline(text: string) {
+  if (!text) return null;
+  const match = text.match(/(e-?learning)/i);
+  if (!match || match.index === undefined) {
+    return text;
+  }
+
+  const before = text.slice(0, match.index);
+  const matched = text.slice(match.index, match.index + match[0].length);
+  const after = text.slice(match.index + match[0].length);
+
+  return (
+    <>
+      <span>{before}</span>
+      <span className="inline-block bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+        {matched}
+      </span>
+      <span>{after}</span>
+    </>
+  );
+}
+
 export default function LandingPage() {
   const { t } = useTranslation('landing');
   const { config, resolveText } = useLandingConfig();
@@ -131,13 +153,9 @@ export default function LandingPage() {
             </div>
 
             <h1 className="mt-8 font-display text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-              {resolveText(config.hero?.headlineEn, config.hero?.headlineAm) || (
-                <>
-                  {t('landingPage.learningManagementSystemFor')}{' '}
-                  <span className="bg-gradient-to-r from-info via-info to-warning bg-clip-text text-transparent">
-                    {t('landingPage.ministryOfRevenues')}
-                  </span>
-                </>
+              {renderHeroHeadline(
+                resolveText(config.hero?.headlineEn, config.hero?.headlineAm) ||
+                  t('landingPage.learningManagementSystemFor'),
               )}
             </h1>
 
