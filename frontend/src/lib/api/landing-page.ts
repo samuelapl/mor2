@@ -170,7 +170,7 @@ export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
   hero: {
     badgeTextEn: 'Unified National Tax & Customs Training Platform',
     badgeTextAm: '',
-    headlineEn: 'Learning Management System',
+    headlineEn: 'MoR eLearning Management System',
     headlineAm: '',
     subtitleEn:
       'A single, standardized infrastructure bridging regional branches, customs checkpoints, and headquarters with continuous accreditation and role-based training.',

@@ -132,7 +132,7 @@ export default function PublicHeader() {
 
                 {config.header?.showGetStartedButton !== false && (
                   <Link
-                    href="/login"
+                    href="/register"
                     className="hidden rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-sky-600/20 transition hover:from-sky-500 hover:to-blue-600 active:scale-95 sm:inline-flex"
                   >
                     {t('publicHeader.getStarted')}
@@ -175,21 +175,36 @@ export default function PublicHeader() {
                   {link.label}
                 </Link>
               ))}
-              <div className="pt-2">
-                <Link
-                  href={dashboardHref ?? '/login'}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-2.5 text-xs font-semibold text-white shadow-md shadow-sky-600/20 transition hover:from-sky-500 hover:to-blue-600"
-                >
-                  {dashboardHref ? (
-                    <>
-                      <LayoutDashboard className="h-4 w-4" />
-                      {t('publicHeader.myDashboard')}
-                    </>
-                  ) : (
-                    t('publicFooter.signIn')
-                  )}
-                </Link>
+              <div className="pt-2 flex flex-col gap-2">
+                {dashboardHref ? (
+                  <Link
+                    href={dashboardHref}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-2.5 text-xs font-semibold text-white shadow-md shadow-sky-600/20 transition hover:from-sky-500 hover:to-blue-600"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    {t('publicHeader.myDashboard')}
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-input/80 bg-card px-4 py-2.5 text-xs font-semibold text-secondary-foreground shadow-sm transition hover:bg-muted"
+                    >
+                      {t('publicFooter.signIn')}
+                    </Link>
+                    {config.header?.showGetStartedButton !== false && (
+                      <Link
+                        href="/register"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-2.5 text-xs font-semibold text-white shadow-md shadow-sky-600/20 transition hover:from-sky-500 hover:to-blue-600"
+                      >
+                        {t('publicHeader.getStarted')}
+                      </Link>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>
