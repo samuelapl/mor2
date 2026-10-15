@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, BookOpenCheck, CheckCircle2, Lock } from 'lucide-react';
+import { BookOpen, BookOpenCheck, CheckCircle2, Clock, Lock } from 'lucide-react';
 import type { Lesson, UploadedResource } from '@/types';
 import type { ApiAttachedAssessment, ApiProgressLesson, ApiProgressSubLesson } from '@/lib/api/types';
 import { RichContent } from '@/components/ui/RichContent';
@@ -58,8 +58,9 @@ export function DocumentStage({
             </Badge>
           ) : null}
           {durationMin ? (
-            <span className="text-xs font-semibold text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
-              ⏱ {durationMin} min study
+            <span className="text-xs font-semibold text-muted-foreground bg-secondary px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+              <Clock className="h-3 w-3 text-muted-foreground" />
+              {durationMin} min study
             </span>
           ) : null}
         </div>

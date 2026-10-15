@@ -277,11 +277,22 @@ export default function LearnerDashboardPage() {
                   <div>
                     <div className="flex items-center justify-between gap-2">
                       <Badge variant={isLive ? 'green' : isPerson ? 'amber' : 'blue'}>
-                        {isLive
-                          ? '● LIVE NOW'
-                          : isPerson
-                            ? '🏢 IN-PERSON CLASSROOM'
-                            : 'VIRTUAL LECTURE'}
+                        {isLive ? (
+                          <span className="flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            LIVE NOW
+                          </span>
+                        ) : isPerson ? (
+                          <span className="flex items-center gap-1">
+                            <Building2 className="h-3 w-3" />
+                            IN-PERSON CLASSROOM
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <Video className="h-3 w-3" />
+                            VIRTUAL LECTURE
+                          </span>
+                        )}
                       </Badge>
                       <span className="text-[11px] font-medium text-subtle-foreground">
                         {session.durationMinutes} mins

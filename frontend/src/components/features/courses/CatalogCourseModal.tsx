@@ -441,7 +441,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                     <div className="flex items-center justify-between">
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-info-soft px-2.5 py-1 text-xs font-semibold text-info border border-info/30">
                         <Laptop className="h-3.5 w-3.5" />
-                        🌐 Pure Online
+                        Pure Online
                       </span>
                       <span
                         className={`h-4 w-4 rounded-full border flex items-center justify-center ${
@@ -475,7 +475,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                     <div className="flex items-center justify-between">
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-warning-soft px-2.5 py-1 text-xs font-semibold text-warning border border-warning/30">
                         <Building2 className="h-3.5 w-3.5" />
-                        🏢 In-Person Classroom
+                        In-Person Classroom
                       </span>
                       <span
                         className={`h-4 w-4 rounded-full border flex items-center justify-center ${

@@ -171,7 +171,7 @@ export function InPersonRoundScheduler({
         descriptionEn: plan.descriptionEn || "",
         objectivesEn: plan.objectivesEn || "",
         quizCount: plan.quizzes?.length ?? 0,
-        trainerId: plan.trainerId || fallbackTrainer,
+        trainerId: fallbackTrainer,
         date: appToday(idx + 1),
         time: "09:00",
         durationMinutes: 120,
@@ -295,6 +295,18 @@ export function InPersonRoundScheduler({
       }
     }
 
+    // Validate that each selected venue has an assigned in-person trainer
+    for (const vId of selectedVenueIds) {
+      const assigned = venueTrainers[vId] || defaultTrainerId;
+      if (!assigned) {
+        const v = venues.find((x) => x.id === vId);
+        setError(
+          `Please assign an in-person trainer for venue "${v?.name || vId}" (${v?.branch || "Branch"}).`,
+        );
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       if (selectedVenueIds.length === 1) {
@@ -314,7 +326,7 @@ export function InPersonRoundScheduler({
             titleAm: row.titleEn.trim(),
             descriptionEn: row.descriptionEn.trim() || undefined,
             objectivesEn: row.objectivesEn.trim() || undefined,
-            trainerId: row.trainerId || assignedTrainer,
+            trainerId: assignedTrainer,
             scheduledAt: appDateTimeToIso(row.date, row.time),
             durationMinutes: Number(row.durationMinutes) || 120,
           })),

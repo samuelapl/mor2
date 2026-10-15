@@ -299,7 +299,7 @@
     "totalQuestions": "Total Questions",
     "examReferenceMaterial": "Exam Reference Material",
     "examQuestionsPreview": "Exam Questions Preview ({count})",
-    "noQuestionsAddedToThisAssessment": "⚠ No questions added to this assessment yet.",
+    "noQuestionsAddedToThisAssessment": "No questions added to this assessment yet.",
     "examReferenceFile": "Exam Reference File"
   },
   "assessmentQuestionPreview": {
@@ -308,7 +308,7 @@
     "shortAnswer": "Short Answer",
     "point": "Point",
     "points": "Points",
-    "correctAnswer": "Correct Answer ✓",
+    "correctAnswer": "Correct Answer",
     "true": "True",
     "false": "False",
     "expectedKeywordsGradingRubric": "Expected Keywords & Grading Rubric:",
@@ -320,7 +320,7 @@
     "n2CurriculumStructureUploadedMaterials": "2. Curriculum Structure & Uploaded Materials",
     "reviewAllModulesLessonsReadingNotes": "Review all modules, lessons, reading notes, and attached documents.",
     "editCurriculum": "Edit Curriculum",
-    "noModulesAddedToThisCourse": "⚠ No modules added to this course yet.",
+    "noModulesAddedToThisCourse": "No modules added to this course yet.",
     "moduleDescription": "Module Description:",
     "moduleResourcesReferences": "Module Resources & References ({count})",
     "lessonsInThisModule": "Lessons in this Module ({count})",
@@ -384,7 +384,7 @@
     "deleteCourse": "Delete Course",
     "archiveCourse": "Archive Course",
     "archiveItWillMoveOutOf": "Archive \"{courseTitle}\"? It will move out of the active catalog.",
-    "learnerNotice": " ⚠️ Notice: This course currently has {learnerCount} enrolled learner(s). Confirming this deletion will automatically delete and cancel all learner enrollments for this course.",
+    "learnerNotice": " Notice: This course currently has {learnerCount} enrolled learner(s). Confirming this deletion will automatically delete and cancel all learner enrollments for this course.",
     "deleteConfirm": "Delete \"{courseTitle}\"? This action cannot be undone and will permanently remove all associated course content.{learnerNotice}"
   },
   "approvalHistoryStage": {
@@ -423,7 +423,7 @@
     "noDescriptionProvided": "No description provided.",
     "learningObjectives": "Learning Objectives",
     "noObjectivesSpecified": "No objectives specified.",
-    "thisModuleHasNoLessons": "⚠ This module has no lessons.",
+    "thisModuleHasNoLessons": "This module has no lessons.",
     "moduleFiles": "Module files ({count})"
   },
   "overviewStage": {
@@ -446,9 +446,9 @@
     "allStaff": "All Staff",
     "prerequisites": "Prerequisites:",
     "none": "None",
-    "noCourseDescriptionProvided": "⚠ No course description provided.",
+    "noCourseDescriptionProvided": "No course description provided.",
     "learningObjectivesOutcomes": "Learning Objectives & Outcomes",
-    "noLearningObjectivesSpecified": "⚠ No learning objectives specified.",
+    "noLearningObjectivesSpecified": "No learning objectives specified.",
     "courseReferenceMaterials": "Course Reference Materials ({count})"
   },
   "sessionPlanStage": {

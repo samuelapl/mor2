@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Building2,
   CheckCircle2,
+  MapPin,
   Plus,
   RefreshCw,
   Trash2,
@@ -191,8 +192,9 @@ export function VenueAllocationStep({
                       ))}
                     </select>
                     {rowVenue?.building ? (
-                      <p className="mt-1 text-[11px] text-subtle-foreground truncate">
-                        📍 {rowVenue.building}
+                      <p className="mt-1 text-[11px] text-subtle-foreground truncate flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-amber-500 shrink-0" />
+                        {rowVenue.building}
                       </p>
                     ) : null}
                   </td>
@@ -213,7 +215,7 @@ export function VenueAllocationStep({
                         return (
                           <option key={t.id} value={t.id}>
                             {t.firstName} {t.lastName}{" "}
-                            {isAffiliated ? "★ (Primary Venue)" : ""}
+                            {isAffiliated ? "[Primary Venue]" : ""}
                           </option>
                         );
                       })}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, UserCog } from 'lucide-react';
+import { Building2, Eye, EyeOff, Globe, UserCog } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useUserStore } from '@/lib/stores/user-store';
 import PageShell from '@/components/shared/PageShell';
@@ -233,7 +233,10 @@ export default function RegisterActorPage() {
                             : 'border-border bg-card/60 text-muted-foreground hover:bg-card'
                         )}
                       >
-                        <span>🌐 Pure Online</span>
+                        <span className="flex items-center gap-1.5">
+                          <Globe className="h-3.5 w-3.5 text-indigo-500" />
+                          Pure Online
+                        </span>
                         <span className={cn('h-3.5 w-3.5 rounded-full border', form.trainerType === 'ONLINE' && 'bg-primary border-primary')} />
                       </button>
                       <button
@@ -246,7 +249,10 @@ export default function RegisterActorPage() {
                             : 'border-border bg-card/60 text-muted-foreground hover:bg-card'
                         )}
                       >
-                        <span>🏢 In-Person Classroom</span>
+                        <span className="flex items-center gap-1.5">
+                          <Building2 className="h-3.5 w-3.5 text-amber-500" />
+                          In-Person Classroom
+                        </span>
                         <span className={cn('h-3.5 w-3.5 rounded-full border', form.trainerType === 'IN_PERSON' && 'bg-primary border-primary')} />
                       </button>
                     </div>

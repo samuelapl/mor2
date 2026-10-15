@@ -11,6 +11,7 @@ import {
   Eye,
   FilePlus2,
   ImagePlus,
+  Lightbulb,
   Loader2,
   Move,
   PenTool,
@@ -19,6 +20,7 @@ import {
   Send,
   ShieldCheck,
   Stamp,
+  Star,
   Trash2,
   Type,
   Upload,
@@ -619,9 +621,10 @@ export function CertificateTemplatesAdmin() {
                       ) : template.isActive ? (
                         <Badge
                           variant="amber"
-                          className="shadow-xs font-bold text-[11px] bg-amber-500 text-foreground border-warning"
+                          className="shadow-xs font-bold text-[11px] bg-amber-500 text-foreground border-warning inline-flex items-center gap-1"
                         >
-                          ★ Active Template
+                          <Star className="h-3 w-3 fill-current" />
+                          Active Template
                         </Badge>
                       ) : (
                         <Badge variant="slate" className="shadow-xs font-bold text-[11px]">
@@ -1129,8 +1132,9 @@ export function CertificateTemplatesAdmin() {
                             />
                           </div>
 
-                          <p className="text-[10px] text-subtle-foreground italic">
-                            💡 Drag this stamp on the live canvas preview to move it anywhere.
+                          <p className="text-[10px] text-subtle-foreground italic flex items-center gap-1">
+                            <Lightbulb className="h-3 w-3 text-amber-500 shrink-0" />
+                            Drag this stamp on the live canvas preview to move it anywhere.
                           </p>
                         </div>
                       ))
@@ -1297,8 +1301,9 @@ export function CertificateTemplatesAdmin() {
                             />
                           </div>
 
-                          <p className="text-[10px] text-subtle-foreground italic">
-                            💡 Drag this signature on the canvas to place it anywhere.
+                          <p className="text-[10px] text-subtle-foreground italic flex items-center gap-1">
+                            <Lightbulb className="h-3 w-3 text-amber-500 shrink-0" />
+                            Drag this signature on the canvas to place it anywhere.
                           </p>
                         </div>
                       ))
@@ -1443,9 +1448,9 @@ export function CertificateTemplatesAdmin() {
                         />
                       </div>
                     </div>
-                    <p className="text-[10px] text-subtle-foreground italic">
-                      💡 Course hours and issue date are dynamic. Drag either label directly on the
-                      canvas preview to reposition.
+                    <p className="text-[10px] text-subtle-foreground italic flex items-center gap-1">
+                      <Lightbulb className="h-3 w-3 text-amber-500 shrink-0 inline" />
+                      <span>Course hours and issue date are dynamic. Drag either label directly on the canvas preview to reposition.</span>
                     </p>
                   </div>
 

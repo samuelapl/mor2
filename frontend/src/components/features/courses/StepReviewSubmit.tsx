@@ -3,12 +3,17 @@
 import { calculateCourseDuration, calculateModuleDuration, formatDuration } from '@/lib/duration';
 import React, { useState, useMemo } from 'react';
 import {
+  AlertTriangle,
   BookOpen,
+  Building2,
+  CheckCircle2,
   ChevronDown,
+  Globe,
   Layers,
   Maximize2,
   Minimize2,
   Pencil,
+  Repeat,
   Scale,
   ShieldCheck,
 } from 'lucide-react';
@@ -389,11 +394,22 @@ export function StepReviewSubmit({
                 )}
                 variant="outline"
               >
-                {deliveryMode === 'ONLINE_ONLY'
-                  ? '🌐 Pure Online'
-                  : deliveryMode === 'IN_PERSON_ONLY'
-                    ? '🏢 In-Person Only'
-                    : '🔄 Flexible (Online & In-Person)'}
+                {deliveryMode === 'ONLINE_ONLY' ? (
+                  <span className="flex items-center gap-1">
+                    <Globe className="h-3 w-3" />
+                    Pure Online
+                  </span>
+                ) : deliveryMode === 'IN_PERSON_ONLY' ? (
+                  <span className="flex items-center gap-1">
+                    <Building2 className="h-3 w-3" />
+                    In-Person Only
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <Repeat className="h-3 w-3" />
+                    Flexible (Online & In-Person)
+                  </span>
+                )}
               </Badge>
             </div>
 
@@ -432,8 +448,9 @@ export function StepReviewSubmit({
               html={description}
             />
           ) : (
-            <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/60 p-3 text-xs text-warning italic">
-              ⚠ No course description provided.
+            <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/60 p-3 text-xs text-warning italic flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>No course description provided.</span>
             </div>
           )}
         </div>
@@ -451,8 +468,9 @@ export function StepReviewSubmit({
               />
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/60 p-3 text-xs text-warning italic">
-              ⚠ No learning objectives specified.
+            <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/60 p-3 text-xs text-warning italic flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>No learning objectives specified.</span>
             </div>
           )}
         </div>
@@ -490,8 +508,9 @@ export function StepReviewSubmit({
         </div>
 
         {modules.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/70 p-5 text-center text-xs text-warning">
-            ⚠ No modules added to this course yet. Go back to Step 2 to add modules and lessons.
+          <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/70 p-5 text-center text-xs text-warning flex items-center justify-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>No modules added to this course yet. Go back to Step 2 to add modules and lessons.</span>
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-border/90 divide-y divide-border/80">
@@ -644,8 +663,9 @@ export function StepReviewSubmit({
         </div>
 
         {questions.length === 0 && (
-          <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/70 p-3.5 text-xs text-warning">
-            ⚠ No final assessment questions added yet. Learners will complete the course without a final exam.
+          <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/70 p-3.5 text-xs text-warning flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            <span>No final assessment questions added yet. Learners will complete the course without a final exam.</span>
           </div>
         )}
       </div>
@@ -662,13 +682,18 @@ export function StepReviewSubmit({
             </div>
             <span
               className={cn(
-                'text-xs font-bold px-2.5 py-1 rounded-lg border',
+                'text-xs font-bold px-2.5 py-1 rounded-lg border inline-flex items-center gap-1.5',
                 totalAllocatedWeight === 100
                   ? 'bg-success-soft text-success border-success/30'
                   : 'bg-warning-soft text-warning border-warning/30',
               )}
             >
-              Total Weight: {totalAllocatedWeight}% / 100% {totalAllocatedWeight === 100 ? '✓ Balanced' : '⚠ Action Needed'}
+              {totalAllocatedWeight === 100 ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+              ) : (
+                <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+              )}
+              Total Weight: {totalAllocatedWeight}% / 100% ({totalAllocatedWeight === 100 ? 'Balanced' : 'Action Needed'})
             </span>
           </div>
 
@@ -705,8 +730,9 @@ export function StepReviewSubmit({
           </div>
 
           {totalAllocatedWeight !== 100 && (
-            <p className="text-xs text-warning bg-warning-soft p-2.5 rounded-lg border border-warning/30">
-              ⚠ The sum of assessment weights is {totalAllocatedWeight}%. For balanced course grading, please allocate weights so that the total equals exactly 100%.
+            <p className="text-xs text-warning bg-warning-soft p-2.5 rounded-lg border border-warning/30 flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>The sum of assessment weights is {totalAllocatedWeight}%. For balanced course grading, please allocate weights so that the total equals exactly 100%.</span>
             </p>
           )}
         </div>

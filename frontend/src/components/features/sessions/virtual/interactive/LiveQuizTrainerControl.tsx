@@ -3047,7 +3047,7 @@ export function LiveQuizTrainerControl({
                                                         <span className="truncate">{stripHtmlTags(opt.textEn)}</span>
                                                         {isCorrect && (
                                                           <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-bold text-success bg-success-soft px-2 py-0.5 rounded-full border border-success/30">
-                                                            ✓ Correct Answer
+                                                            <CheckCircle2 className="h-3 w-3 text-success" /> Correct Answer
                                                           </span>
                                                         )}
                                                       </span>

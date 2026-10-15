@@ -5,6 +5,8 @@ import {
   Video,
   MonitorPlay,
   Building2,
+  Globe,
+  Repeat,
   ArrowRight,
   RefreshCw,
   UserCheck,
@@ -447,11 +449,22 @@ export function ScheduleSessionModal({
                 selectedCourse.deliveryMode === "BOTH" && "bg-success-soft text-success border-success/30",
               )}
             >
-              {selectedCourse.deliveryMode === "ONLINE_ONLY"
-                ? "🌐 Online Only"
-                : selectedCourse.deliveryMode === "IN_PERSON_ONLY"
-                  ? "🏢 In-Person Only"
-                  : "🔄 Flexible (Online & In-Person)"}
+              {selectedCourse.deliveryMode === "ONLINE_ONLY" ? (
+                <span className="flex items-center gap-1">
+                  <Globe className="h-3 w-3" />
+                  Online Only
+                </span>
+              ) : selectedCourse.deliveryMode === "IN_PERSON_ONLY" ? (
+                <span className="flex items-center gap-1">
+                  <Building2 className="h-3 w-3" />
+                  In-Person Only
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <Repeat className="h-3 w-3" />
+                  Flexible (Online & In-Person)
+                </span>
+              )}
             </Badge>
           </div>
         ) : null}
@@ -595,13 +608,13 @@ export function ScheduleSessionModal({
                 onChange={(e) => handlePlatformChange(e.target.value as PlatformChoice)}
                 className={inputClass}
               >
-                <option value="LIVEKIT">⚡ LiveKit (Native In-App WebRTC Classroom)</option>
-                <option value="JITSI">🎥 Jitsi Meet (Open-Source / Instant Web Video)</option>
-                <option value="BIGBLUEBUTTON">🏛️ BigBlueButton (Dedicated Virtual Classroom)</option>
-                <option value="GOOGLE_MEET">🟢 Google Meet</option>
-                <option value="ZOOM">🔵 Zoom Meetings</option>
-                <option value="MS_TEAMS">🟣 Microsoft Teams</option>
-                <option value="CUSTOM">🔗 Other Custom URL</option>
+                <option value="LIVEKIT">LiveKit (Native In-App WebRTC Classroom)</option>
+                <option value="JITSI">Jitsi Meet (Open-Source Instant Video)</option>
+                <option value="BIGBLUEBUTTON">BigBlueButton (Virtual Classroom)</option>
+                <option value="GOOGLE_MEET">Google Meet</option>
+                <option value="ZOOM">Zoom Meetings</option>
+                <option value="MS_TEAMS">Microsoft Teams</option>
+                <option value="CUSTOM">Custom External URL</option>
               </select>
             </div>
 

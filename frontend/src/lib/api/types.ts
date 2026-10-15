@@ -552,6 +552,7 @@ export interface ApiLearnerSession {
   sessionType?: 'VIRTUAL' | 'IN_PERSON' | string | null;
   venueId?: string | null;
   venue?: ApiVenue | null;
+  rescheduleStatus?: string | null;
 }
 
 export interface ApiMissedRound {

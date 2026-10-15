@@ -131,7 +131,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
       }
     }
 
-    let message = `Request failed (${res.status})`;
+    let message = getFallbackErrorMessage(res.status);
     let code: string | undefined;
     let reason: ApiErrorReason | undefined;
     let remainingSeconds: number | undefined;
@@ -142,14 +142,27 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
         code?: string;
         reason?: ApiErrorReason;
         remainingSeconds?: number;
+        error?: {
+          code?: string;
+          message?: string | string[];
+          details?: unknown;
+        };
       };
-      message = Array.isArray(body.message) ? body.message.join('; ') : (body.message ?? message);
-      code = body.code;
+      const extractedMessage =
+        body.message ??
+        body.error?.message ??
+        (typeof body.error === 'string' ? body.error : undefined);
+
+      if (extractedMessage) {
+        message = Array.isArray(extractedMessage) ? extractedMessage.join('; ') : extractedMessage;
+      }
+      code = body.code ?? body.error?.code;
       reason = body.reason;
       remainingSeconds = body.remainingSeconds;
       details = body as Record<string, unknown>;
     } catch {
-      // non-JSON error body
+      // non-JSON error body (e.g. HTML 404 from Next.js, proxy 502/503)
+      // Retains the friendly message from getFallbackErrorMessage(res.status)
     }
     throw new ApiError(message, res.status, code, reason, remainingSeconds, details);
   };
@@ -198,7 +211,38 @@ export async function apiText(path: string, query?: RequestOptions['query']): Pr
   }
   const res = await fetch(buildUrl(path, query), { headers, credentials: 'include' });
   if (!res.ok) {
-    throw new ApiError(`Request failed (${res.status})`, res.status);
+    throw new ApiError(getFallbackErrorMessage(res.status), res.status);
   }
   return res.text();
+}
+
+/**
+ * Maps standard HTTP status codes to user-friendly messages when
+ * an API endpoint returns non-JSON content (e.g. HTML 404 from Next.js, proxy 502/503).
+ */
+export function getFallbackErrorMessage(status: number): string {
+  switch (status) {
+    case 400:
+      return 'The request could not be processed. Please check your information and try again.';
+    case 401:
+      return 'Authentication required. Please sign in to continue.';
+    case 403:
+      return 'You do not have permission to perform this action.';
+    case 404:
+      return 'The requested service could not be found. Please verify the server is running.';
+    case 408:
+      return 'Request timed out. Please check your connection and try again.';
+    case 429:
+      return 'Too many requests. Please wait a moment before trying again.';
+    case 500:
+      return 'An internal server error occurred. Please try again later.';
+    case 502:
+      return 'The server is currently unreachable. Please check if the backend service is running.';
+    case 503:
+      return 'Service temporarily unavailable. Please try again in a few moments.';
+    case 504:
+      return 'The server took too long to respond. Please try again.';
+    default:
+      return `Unable to complete request (${status}). Please try again.`;
+  }
 }

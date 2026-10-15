@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { ApiLiveSession } from '@/lib/api/types';
 import { Table, TableRow, Td } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar, Clock, MapPin } from 'lucide-react';
 import { isInPersonSession } from '@/lib/session-mode';
 import { stripHtmlTags } from '@/components/ui/RichContent';
 import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
@@ -171,10 +171,11 @@ export function SessionTable({
                   </div>
                   {isInPersonSession(row.session) && row.session.venue ? (
                     <p
-                      className="mt-0.5 truncate text-[11px] font-medium text-warning"
+                      className="mt-0.5 truncate text-[11px] font-medium text-warning flex items-center gap-1"
                       title={`${row.session.venue.branch} — ${row.session.venue.name} (${row.session.venue.capacity} seats)`}
                     >
-                      📍 {row.session.venue.branch} — {row.session.venue.name}
+                      <MapPin className="h-3 w-3 text-amber-500 shrink-0" />
+                      {row.session.venue.branch} — {row.session.venue.name}
                     </p>
                   ) : (
                     <p

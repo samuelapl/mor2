@@ -395,8 +395,9 @@ export default function CourseFeedbackPage() {
                     <span className="text-subtle-foreground block text-[10px] uppercase font-bold">
                       {t('courseFeedbackPage.curriculum')}
                     </span>
-                    <span className="font-semibold text-foreground">
-                      ⭐ {item.ratings.curriculumRelevance}/5
+                    <span className="font-semibold text-foreground flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />
+                      {item.ratings.curriculumRelevance}/5
                     </span>
                   </div>
 
@@ -404,8 +405,9 @@ export default function CourseFeedbackPage() {
                     <span className="text-subtle-foreground block text-[10px] uppercase font-bold">
                       {t('courseFeedbackPage.trainer')}
                     </span>
-                    <span className="font-semibold text-foreground">
-                      ⭐ {item.ratings.trainerDelivery}/5
+                    <span className="font-semibold text-foreground flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />
+                      {item.ratings.trainerDelivery}/5
                     </span>
                   </div>
 
@@ -413,8 +415,9 @@ export default function CourseFeedbackPage() {
                     <span className="text-subtle-foreground block text-[10px] uppercase font-bold">
                       {t('courseFeedbackPage.applicability')}
                     </span>
-                    <span className="font-semibold text-foreground">
-                      ⭐ {item.ratings.practicalApplicability}/5
+                    <span className="font-semibold text-foreground flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />
+                      {item.ratings.practicalApplicability}/5
                     </span>
                   </div>
 
@@ -422,8 +425,9 @@ export default function CourseFeedbackPage() {
                     <span className="text-subtle-foreground block text-[10px] uppercase font-bold">
                       {t('courseFeedbackPage.platform')}
                     </span>
-                    <span className="font-semibold text-foreground">
-                      ⭐ {item.ratings.materialsAndPlatform}/5
+                    <span className="font-semibold text-foreground flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />
+                      {item.ratings.materialsAndPlatform}/5
                     </span>
                   </div>
                 </div>

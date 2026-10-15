@@ -299,7 +299,7 @@
     "totalQuestions": "አጠቃላይ ጥያቄዎች",
     "examReferenceMaterial": "የፈተና ማመሳከሪያ ሰነድ",
     "examQuestionsPreview": "የፈተና ጥያቄዎች ቅድመ-ዕይታ ({count})",
-    "noQuestionsAddedToThisAssessment": "⚠ ለዚህ ምዘና እስካሁን ምንም ጥያቄ አልተጨመረም።",
+    "noQuestionsAddedToThisAssessment": "ለዚህ ምዘና እስካሁን ምንም ጥያቄ አልተጨመረም።",
     "examReferenceFile": "የፈተና ማመሳከሪያ ፋይል"
   },
   "assessmentQuestionPreview": {
@@ -308,7 +308,7 @@
     "shortAnswer": "አጭር መልስ",
     "point": "ነጥብ",
     "points": "ነጥብ",
-    "correctAnswer": "ትክክለኛ መልስ ✓",
+    "correctAnswer": "ትክክለኛ መልስ",
     "true": "እውነት",
     "false": "ሐሰት",
     "expectedKeywordsGradingRubric": "የሚጠበቁ ቁልፍ ቃላት እና የማረሚያ መስፈርት፡",
@@ -320,7 +320,7 @@
     "n2CurriculumStructureUploadedMaterials": "2. የስርዓተ-ትምህርት አወቃቀር እና የተጫኑ ሰነዶች",
     "reviewAllModulesLessonsReadingNotes": "ሁሉንም ሞጁሎች፣ ትምህርቶች፣ የማንበቢያ ማስታወሻዎች እና የተያያዙ ሰነዶችን ይገምግሙ።",
     "editCurriculum": "ስርዓተ-ትምህርት አርትዕ",
-    "noModulesAddedToThisCourse": "⚠ እስካሁን ለዚህ ኮርስ የተጨመረ ሞጁል የለም።",
+    "noModulesAddedToThisCourse": "እስካሁን ለዚህ ኮርስ የተጨመረ ሞጁል የለም።",
     "moduleDescription": "የሞጁል መግለጫ፡",
     "moduleResourcesReferences": "የሞጁል አጠቃላይ ሰነዶች ({count})",
     "lessonsInThisModule": "በዚህ ሞጁል ውስጥ ያሉ ትምህርቶች ({count})",
@@ -384,7 +384,7 @@
     "deleteCourse": "ኮርስ ሰርዝ",
     "archiveCourse": "ኮርስ አስቀምጥ",
     "archiveItWillMoveOutOf": "\"{courseTitle}\" ወደ ማህደር ይቀመጥ? ከንቁ ካታሎግ ይወጣል።",
-    "learnerNotice": " ⚠️ ማሳሰቢያ፦ ይህ ኮርስ በአሁኑ ወቅት {learnerCount} የተመዘገቡ ተማሪዎች አሉት። ኮርሱን መሰረዝ የተማሪዎቹን ምዝገባ በራስ-ሰር ይሰርዛል።",
+    "learnerNotice": " ማሳሰቢያ፦ ይህ ኮርስ በአሁኑ ወቅት {learnerCount} የተመዘገቡ ተማሪዎች አሉት። ኮርሱን መሰረዝ የተማሪዎቹን ምዝገባ በራስ-ሰር ይሰርዛል።",
     "deleteConfirm": "\"{courseTitle}\" ይሰረዝ? ይህ እርምጃ ሊቀለበስ አይችልም እና ሁሉንም ተያያዥ ይዘቶች በቋሚነት ያስወግዳል።{learnerNotice}"
   },
   "approvalHistoryStage": {
@@ -423,7 +423,7 @@
     "noDescriptionProvided": "ማብራሪያ አልተሰጠም።",
     "learningObjectives": "የመማሪያ ዓላማዎች",
     "noObjectivesSpecified": "ዓላማዎች አልተገለጹም።",
-    "thisModuleHasNoLessons": "⚠ ይህ ሞጁል ትምህርት የለውም።",
+    "thisModuleHasNoLessons": "ይህ ሞጁል ትምህርት የለውም።",
     "moduleFiles": "የሞጁል ፋይሎች ({count})"
   },
   "overviewStage": {
@@ -446,9 +446,9 @@
     "allStaff": "ሁሉም ሰራተኞች",
     "prerequisites": "ቅድመ-ሁኔታዎች:",
     "none": "ምንም የለም",
-    "noCourseDescriptionProvided": "⚠ የኮርስ ማብራሪያ አልተሰጠም።",
+    "noCourseDescriptionProvided": "የኮርስ ማብራሪያ አልተሰጠም።",
     "learningObjectivesOutcomes": "የመማሪያ ዓላማዎች እና ውጤቶች",
-    "noLearningObjectivesSpecified": "⚠ የመማሪያ ዓላማዎች አልተገለጹም።",
+    "noLearningObjectivesSpecified": "የመማሪያ ዓላማዎች አልተገለጹም።",
     "courseReferenceMaterials": "የኮርስ ማመሳከሪያ ሰነዶች ({count})"
   },
   "sessionPlanStage": {

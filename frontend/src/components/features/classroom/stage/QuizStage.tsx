@@ -8,6 +8,7 @@ import {
   Clock,
   HelpCircle,
   Lock,
+  LockOpen,
   RotateCcw,
   GraduationCap,
   ArrowRight,
@@ -107,7 +108,10 @@ export function QuizStage({
               <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
                 Status
               </p>
-              <p className="text-base font-bold text-warning mt-1">Trainer Administered 🏛️</p>
+              <p className="text-base font-bold text-warning mt-1 flex items-center gap-1.5">
+                <Building2 className="h-4 w-4 text-warning shrink-0" />
+                Trainer Administered
+              </p>
             </div>
           </div>
 
@@ -214,25 +218,41 @@ export function QuizStage({
           <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs">
             <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">Result</p>
             <p
-              className={`text-base font-bold mt-1 ${
+              className={`text-base font-bold mt-1 flex items-center gap-1.5 ${
                 isPassed ? 'text-success' : 'text-muted-foreground'
               }`}
             >
-              {isPassed ? 'Passed ✅' : 'Incomplete'}
+              {isPassed ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                  Passed
+                </>
+              ) : (
+                'Incomplete'
+              )}
             </p>
           </div>
 
           <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs">
             <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">Status</p>
-            <p className="text-base font-bold text-foreground mt-1">
+            <div className="text-base font-bold text-foreground mt-1">
               {isPassed ? (
-                <span className="text-success">Passed</span>
+                <span className="text-success flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                  Passed
+                </span>
               ) : unlocked ? (
-                <span className="text-primary">Unlocked 🚀</span>
+                <span className="text-primary flex items-center gap-1.5">
+                  <LockOpen className="h-4 w-4 text-primary shrink-0" />
+                  Unlocked
+                </span>
               ) : (
-                <span className="text-subtle-foreground">Locked 🔒</span>
+                <span className="text-subtle-foreground flex items-center gap-1.5">
+                  <Lock className="h-4 w-4 shrink-0" />
+                  Locked
+                </span>
               )}
-            </p>
+            </div>
           </div>
         </div>
 

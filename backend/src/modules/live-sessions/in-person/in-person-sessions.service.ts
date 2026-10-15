@@ -249,7 +249,21 @@ export class InPersonSessionsService {
         );
 
         const plan = slot.sessionPlanId ? planMap.get(slot.sessionPlanId) : undefined;
-        const assignedTrainerId = slot.trainerId || dto.trainerId || plan?.trainerId || null;
+        let assignedTrainerId = slot.trainerId || dto.trainerId || null;
+        if (!assignedTrainerId && plan?.trainerId) {
+          const planTrainer = await tx.user.findUnique({
+            where: { id: plan.trainerId },
+            select: { primaryVenueId: true, trainerType: true },
+          });
+          if (
+            planTrainer &&
+            (planTrainer.trainerType !== 'IN_PERSON' ||
+              !planTrainer.primaryVenueId ||
+              planTrainer.primaryVenueId === dto.venueId)
+          ) {
+            assignedTrainerId = plan.trainerId;
+          }
+        }
 
         if (assignedTrainerId) {
           const trainer = await tx.user.findUnique({

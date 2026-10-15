@@ -333,7 +333,6 @@ export async function seedCourses(
         'Hands-on classroom lab calculating net VAT, auditing tax invoices with electronic fiscal registers (FMR/CIS), and reconciling monthly returns.',
       objectivesEn:
         'Demonstrate practical calculation of net VAT payable; identify invalid tax invoices; complete electronic declaration forms accurately.',
-      trainerId: users.branchTrainers['Adama Branch Office'][0].id,
     },
   });
 
@@ -346,7 +345,6 @@ export async function seedCourses(
         'Classroom case study analyzing disputed tax assessments, non-compliance penalties, and conducting field audit simulations.',
       objectivesEn:
         'Apply statutory penalties for non-filing; conduct audit reconciliation interviews; draft audit assessment notices.',
-      trainerId: users.branchTrainers['Adama Branch Office'][1].id,
     },
   });
 

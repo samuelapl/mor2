@@ -2,21 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  AlertCircle,
-  Building2,
-  CalendarClock,
-  CheckCircle2,
-  Clock,
-  Globe,
-  Info,
-  Loader2,
-  MapPin,
-  Radio,
-  User,
-  Video,
-  XCircle,
-} from 'lucide-react';
+import { AlertCircle, Building2, CalendarClock, CheckCircle2, Clock, Globe, Info, Loader2, MapPin, Radio, User, Video, XCircle } from 'lucide-react';
 import { APP_TIME_ZONE, APP_TIME_ZONE_LABEL } from '@/lib/app-time';
 import { StartsInBadge } from '@/components/features/sessions/shared/StartsInBadge';
 import type { ApiLearnerSession } from '@/lib/api/types';
@@ -38,6 +24,40 @@ const PLATFORM_LABEL: Record<string, string> = {
   MS_TEAMS: 'Microsoft Teams',
   CUSTOM: 'Online meeting',
 };
+
+interface ParsedSessionTitle {
+  roundTag?: string;
+  cleanTitle: string;
+}
+
+function parseSessionTitle(rawTitle: string, rescheduleStatus?: string | null): ParsedSessionTitle {
+  let title = (rawTitle || '').trim();
+  let roundTag: string | undefined;
+
+  // 1. Detect leading "Round X · " or "Round X - "
+  const roundMatch = title.match(/^Round\s+(\d+)\s*[·\-–—]\s*/i);
+  if (roundMatch) {
+    roundTag = `Round ${roundMatch[1]}`;
+    title = title.slice(roundMatch[0].length).trim();
+  } else if (rescheduleStatus && /^ROUND_(\d+)$/i.test(rescheduleStatus)) {
+    const num = rescheduleStatus.match(/^ROUND_(\d+)$/i)?.[1];
+    if (num) roundTag = `Round ${num}`;
+  }
+
+  // 2. Strip trailing venue/location suffix e.g. " (Bahir Dar Branch Office - Bahir Dar Branch Room 101)"
+  title = title.replace(/\s*\([^)]+-[^)]+\)\s*$/i, '').trim();
+
+  // 3. Strip redundant "Classroom Session X:" or "Session X:" prefix if followed by a topic
+  const sessionPrefixMatch = title.match(/^(?:Classroom\s+)?Session\s+\d+:\s*(.+)$/i);
+  if (sessionPrefixMatch && sessionPrefixMatch[1]) {
+    title = sessionPrefixMatch[1].trim();
+  }
+
+  return {
+    roundTag,
+    cleanTitle: title || rawTitle,
+  };
+}
 
 /** The course's online sessions as a learner sees them: when, where and whether they attended. */
 export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] }) {
@@ -79,9 +99,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
   const handleJoinSession = async (s: ApiLearnerSession) => {
     const sessionId = s.sessionId || s.id;
     if (!isTimeReached(s)) {
-      toast.warning(
-        t('liveSessionsStage.youCanJoin5MinutesBefore'),
-      );
+      toast.warning(t('liveSessionsStage.youCanJoin5MinutesBefore'));
       return;
     }
 
@@ -89,10 +107,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
     try {
       // 1. Check if session has a custom external URL (Zoom, Meet, Teams, etc.)
       const joinData = await fetchSessionJoinUrl(sessionId).catch(() => null);
-      if (
-        joinData?.joinUrl &&
-        (joinData.platform !== 'LIVEKIT' || joinData.joinUrl.startsWith('http'))
-      ) {
+      if (joinData?.joinUrl && (joinData.platform !== 'LIVEKIT' || joinData.joinUrl.startsWith('http'))) {
         window.open(joinData.joinUrl, '_blank');
         return;
       }
@@ -108,10 +123,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
       // 3. Fallback: navigate directly to that specific session on the live-sessions page
       router.push(`/learner/live-sessions?sessionId=${sessionId}`);
     } catch (err: any) {
-      toast.error(
-        err?.message ||
-          t('liveSessionsStage.failedToConnectToTheSession'),
-      );
+      toast.error(err?.message || t('liveSessionsStage.failedToConnectToTheSession'));
     } finally {
       setJoiningSessionId(null);
     }
@@ -142,9 +154,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
           {anyInPerson ? <Building2 className="h-5 w-5" /> : <Video className="h-5 w-5" />}
         </div>
         <div>
-          <h2 className="text-xl font-bold text-foreground">
-            {anyInPerson ? 'Classroom Sessions' : t('classroomSidebar.liveSessions')}
-          </h2>
+          <h2 className="text-xl font-bold text-foreground">{anyInPerson ? 'Classroom Sessions' : t('classroomSidebar.liveSessions')}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {anyInPerson
               ? 'In-person classroom sessions for this course. Attend them at your assigned branch venue; your certificate is issued once you have attended every session and satisfied course requirements.'
@@ -160,9 +170,13 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
           const isPerson = isPersonSession(s);
           const isCheckedIn = s.attended || checkedInIds.includes(s.sessionId || s.id);
           const isMissed = s.status === 'COMPLETED' && !s.attended;
+          const parsed = parseSessionTitle(s.titleEn, s.rescheduleStatus);
 
           return (
-            <li key={s.id} className={cn('rounded-2xl border p-4 shadow-2xs transition', isMissed ? 'border-danger/30 bg-card/60' : 'border-border bg-card')}>
+            <li
+              key={s.id}
+              className={cn('rounded-2xl border p-4 shadow-2xs transition', isMissed ? 'border-danger/30 bg-card/60' : 'border-border bg-card')}
+            >
               {(s.missedRounds ?? []).length > 0 && s.status !== 'COMPLETED' && (
                 <div className="mb-3 rounded-xl border border-info/30 bg-info-soft/40 p-3 space-y-2">
                   <div className="text-xs font-semibold text-info flex items-center gap-1.5">
@@ -183,30 +197,30 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                       </li>
                     ))}
                   </ul>
-                  <p className="text-xs text-muted-foreground font-medium pt-0.5">
-                    {t('liveSessionsStage.attendTheNextSession')}
-                  </p>
+                  <p className="text-xs text-muted-foreground font-medium pt-0.5">{t('liveSessionsStage.attendTheNextSession')}</p>
                 </div>
               )}
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
-                    {t('liveSessionsStage.session')} {i + 1}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
+                      {t('liveSessionsStage.session')} {i + 1}
+                    </p>
+                    {parsed.roundTag && (
+                      <span className="rounded-md bg-primary-soft text-primary border border-primary/20 px-1.5 py-0.5 text-[10px] font-bold">
+                        {parsed.roundTag}
+                      </span>
+                    )}
+                  </div>
                   <h3
                     className={cn(
-                      'font-semibold text-foreground',
+                      'mt-0.5 text-sm sm:text-base font-semibold text-foreground leading-snug',
                       isMissed && 'line-through text-muted-foreground decoration-danger/60',
                     )}
                   >
-                    {s.titleEn}
+                    {parsed.cleanTitle}
                   </h3>
-                  <p
-                    className={cn(
-                      'mt-1 text-sm text-secondary-foreground',
-                      isMissed && 'line-through text-muted-foreground decoration-danger/60',
-                    )}
-                  >
+                  <p className={cn('mt-1 text-sm text-secondary-foreground', isMissed && 'line-through text-muted-foreground decoration-danger/60')}>
                     {s.scheduledAt ? fmt(s.scheduledAt) : t('liveSessionsStage.dateToBeAnnounced')}
                     {s.durationMinutes ? ` · ${s.durationMinutes} ${t('liveSessionsStage.min')}` : ''}
                   </p>
@@ -214,21 +228,13 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                     <div className="mt-2.5 rounded-xl border border-danger/30 bg-danger-soft/40 p-2.5 text-xs text-danger flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 shrink-0" />
                       <span>
-                        This session was missed. You must attend an upcoming rescheduled session to satisfy attendance requirements and unlock the final assessment.
+                        This session was missed. You must attend an upcoming rescheduled session to satisfy attendance requirements and unlock the
+                        final assessment.
                       </span>
                     </div>
                   )}
                   <StartsInBadge seconds={s.startsInSeconds} className="mt-1" />
-                  {s.venue && (
-                    <div className="flex items-center gap-1.5 text-xs text-secondary-foreground font-medium mt-1">
-                      <MapPin className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                      <span>
-                        {s.venue.branch} · {s.venue.name}
-                        {s.venue.building ? ` (${s.venue.building})` : ''}
-                      </span>
-                    </div>
-                  )}
-                  {(s.platform || s.trainerName) && (
+                  {!isPerson && (s.platform || s.trainerName) && (
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {[s.platform ? (PLATFORM_LABEL[s.platform] ?? s.platform) : null, s.trainerName].filter(Boolean).join(' · ')}
                     </p>
@@ -307,9 +313,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                         ) : (
                           <Video className="h-3.5 w-3.5" />
                         )}
-                        {isTimeReached(s)
-                          ? t('liveSessionsStage.join')
-                          : t('liveSessionsStage.timeNotReached')}
+                        {isTimeReached(s) ? t('liveSessionsStage.join') : t('liveSessionsStage.timeNotReached')}
                       </button>
                     ) : null}
                   </div>
@@ -325,7 +329,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
         <Modal
           open={Boolean(selectedSession)}
           onClose={() => setSelectedSession(null)}
-          title={selectedSession.titleEn}
+          title={parseSessionTitle(selectedSession.titleEn, selectedSession.rescheduleStatus).cleanTitle}
           subtitle={
             isPersonSession(selectedSession)
               ? 'In-person classroom session schedule and venue details'
@@ -334,11 +338,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
           size="md"
           footer={
             <div className="flex items-center justify-between w-full">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedSession(null)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setSelectedSession(null)}>
                 {t('liveSessionsStage.close')}
               </Button>
               {isPersonSession(selectedSession) ? (
@@ -387,9 +387,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                   ) : (
                     <Video className="h-4 w-4" />
                   )}
-                  {isTimeReached(selectedSession)
-                    ? t('liveSessionsStage.goToVirtualRoom')
-                    : t('liveSessionsStage.timeNotReached2')}
+                  {isTimeReached(selectedSession) ? t('liveSessionsStage.goToVirtualRoom') : t('liveSessionsStage.timeNotReached2')}
                 </button>
               ) : null}
             </div>
@@ -413,9 +411,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
             {!isTimeReached(selectedSession) && !isPersonSession(selectedSession) && (
               <div className="flex items-center gap-2.5 p-3 rounded-xl bg-warning-soft border border-warning/30 text-warning text-xs font-medium">
                 <Clock className="h-4 w-4 shrink-0 text-warning" />
-                <span>
-                  {t('liveSessionsStage.theScheduledTimeHasNotBeen')}
-                </span>
+                <span>{t('liveSessionsStage.theScheduledTimeHasNotBeen')}</span>
               </div>
             )}
 
@@ -437,7 +433,9 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                   {t('liveSessionsStage.duration')}
                 </span>
                 <p className="mt-1 font-semibold text-foreground text-xs">
-                  {selectedSession.durationMinutes ? `${selectedSession.durationMinutes} ${t('liveSessionsStage.minutes')}` : t('liveSessionsStage.standardLesson')}
+                  {selectedSession.durationMinutes
+                    ? `${selectedSession.durationMinutes} ${t('liveSessionsStage.minutes')}`
+                    : t('liveSessionsStage.standardLesson')}
                 </p>
               </div>
 
@@ -476,9 +474,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                     {selectedSession.venue.building ? ` (${selectedSession.venue.building})` : ''}
                   </p>
                   {selectedSession.venue.facilities && selectedSession.venue.facilities.length > 0 && (
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      Facilities: {selectedSession.venue.facilities.join(', ')}
-                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">Facilities: {selectedSession.venue.facilities.join(', ')}</p>
                   )}
                 </div>
               )}
@@ -489,9 +485,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                 <Info className="h-4 w-4 shrink-0 text-warning" />
                 {t('liveSessionsStage.certificateRequirementPolicy')}
               </p>
-              <p className="mt-1 leading-relaxed text-warning">
-                {t('liveSessionsStage.learnersAreRequiredToAttendAll')}
-              </p>
+              <p className="mt-1 leading-relaxed text-warning">{t('liveSessionsStage.learnersAreRequiredToAttendAll')}</p>
             </div>
           </div>
         </Modal>

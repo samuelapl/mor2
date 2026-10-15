@@ -298,7 +298,7 @@ export function ReviewSubmitStage({
               <p className="text-[11px] text-muted-foreground">
                 {t('reviewSubmitStage.total')} {calculatedWeights}%{' '}
                 {isWeightValid
-                  ? '✓'
+                  ? '(Balanced)'
                   : calculatedWeights > 100
                     ? `(${calculatedWeights - 100}% over-allocated)`
                     : `(${100 - calculatedWeights}% unallocated)`}

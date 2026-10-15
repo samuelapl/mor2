@@ -8,6 +8,7 @@ import {
   Clock,
   ExternalLink,
   Link2,
+  MapPin,
   MonitorPlay,
   Play,
   Radio,
@@ -167,9 +168,10 @@ export function SessionDetailModal({
               (isInPersonSession(session) ? (
                 <Badge
                   variant="outline"
-                  className="bg-warning-soft text-warning border-warning/30 text-xs py-1 px-2.5"
+                  className="bg-warning-soft text-warning border-warning/30 text-xs py-1 px-2.5 inline-flex items-center gap-1.5"
                 >
-                  📍 Physical Venue Session
+                  <MapPin className="h-3.5 w-3.5 text-amber-500" />
+                  Physical Venue Session
                 </Badge>
               ) : (
                 <Button

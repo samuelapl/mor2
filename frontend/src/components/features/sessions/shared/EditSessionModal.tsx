@@ -359,13 +359,13 @@ export function EditSessionModal({
               onChange={(e) => handlePlatformChange(e.target.value as PlatformChoice)}
               className={inputClass}
             >
-              <option value="LIVEKIT">⚡ LiveKit (Native In-App WebRTC Classroom)</option>
-              <option value="JITSI">🎥 Jitsi Meet (Open-Source / Instant Web Video)</option>
-              <option value="BIGBLUEBUTTON">🏛️ BigBlueButton (Dedicated Virtual Classroom)</option>
-              <option value="GOOGLE_MEET">🟢 Google Meet</option>
-              <option value="ZOOM">🔵 Zoom Meetings</option>
-              <option value="MS_TEAMS">🟣 Microsoft Teams</option>
-              <option value="CUSTOM">🔗 Other Custom URL</option>
+              <option value="LIVEKIT">LiveKit (Native In-App WebRTC Classroom)</option>
+              <option value="JITSI">Jitsi Meet (Open-Source Instant Video)</option>
+              <option value="BIGBLUEBUTTON">BigBlueButton (Virtual Classroom)</option>
+              <option value="GOOGLE_MEET">Google Meet</option>
+              <option value="ZOOM">Zoom Meetings</option>
+              <option value="MS_TEAMS">Microsoft Teams</option>
+              <option value="CUSTOM">Custom External URL</option>
             </select>
           </div>
 
