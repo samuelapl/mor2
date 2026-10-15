@@ -3,6 +3,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PrismaService } from '@config/prisma.service';
 import { buildPaginatedResponse } from '@common/utils';
 import { CacheService } from '@common/cache';
 import {
