@@ -10,7 +10,7 @@ import {
   AuthHeader,
   FormMessage,
   isSixDigitCode,
-  passwordIssueKey,
+  resetPasswordSchema,
   useAuthFlowStore,
   useCompleteFirstLogin,
   useFormError,
@@ -41,14 +41,17 @@ export default function FirstLoginScreen() {
   // The challenge token is short-lived; a 401 means the user must sign in again.
   const expired = error instanceof ApiError && error.status === 401;
 
-  const passwordKey = passwordIssueKey(password);
-  const mismatch = confirm !== password;
+  const validation = resetPasswordSchema.safeParse({ password, confirm });
+  const fieldErrors = !validation.success ? validation.error.flatten().fieldErrors : {};
+  const passwordError = touched && fieldErrors.password?.[0] ? t(fieldErrors.password[0]) : null;
+  const confirmError = touched && fieldErrors.confirm?.[0] ? t(fieldErrors.confirm[0]) : null;
   const codeOk = isSixDigitCode(code);
 
   const submit = () => {
     setTouched(true);
-    if (!codeOk || passwordKey || mismatch) return;
-    complete.mutate({ challengeToken, code, newPassword: password, confirmPassword: confirm });
+    const result = resetPasswordSchema.safeParse({ password, confirm });
+    if (!codeOk || !result.success) return;
+    complete.mutate({ challengeToken, code, newPassword: result.data.password, confirmPassword: result.data.confirm });
   };
 
   return (
@@ -76,7 +79,7 @@ export default function FirstLoginScreen() {
         label={t('auth.newPassword')}
         value={password}
         onChangeText={setPassword}
-        error={touched && passwordKey ? t(passwordKey) : null}
+        error={passwordError}
         hint={t('auth.passwordHint')}
         password
         autoComplete="new-password"
@@ -86,7 +89,7 @@ export default function FirstLoginScreen() {
         label={t('auth.confirmPassword')}
         value={confirm}
         onChangeText={setConfirm}
-        error={touched && mismatch ? t('auth.errors.passwordMismatch') : null}
+        error={confirmError}
         password
         autoComplete="new-password"
         returnKeyType="done"

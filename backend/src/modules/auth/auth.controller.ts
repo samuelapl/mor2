@@ -1,5 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import {
   RegisterDto,
@@ -18,6 +19,8 @@ import { Public, CurrentUser } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
+const ONE_MINUTE = 60_000;
+
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -25,6 +28,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: ONE_MINUTE } })
   @ApiOperation({ summary: 'Register a new user account' })
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
@@ -32,6 +36,7 @@ export class AuthController {
 
   @Public()
   @Post('verify-email')
+  @Throttle({ default: { limit: 5, ttl: ONE_MINUTE } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Verify a new account with the emailed 6-digit code',
@@ -43,6 +48,7 @@ export class AuthController {
 
   @Public()
   @Post('resend-verification')
+  @Throttle({ default: { limit: 3, ttl: ONE_MINUTE } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Email a new account-verification code' })
   async resendVerification(@Body() dto: ResendVerificationDto) {
@@ -51,6 +57,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: ONE_MINUTE } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Login with email and password',
@@ -66,6 +73,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
+  @Throttle({ default: { limit: 30, ttl: ONE_MINUTE } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
   async refresh(@Body() dto: RefreshTokenDto) {
@@ -74,6 +82,7 @@ export class AuthController {
 
   @Public()
   @Post('forgot-password')
+  @Throttle({ default: { limit: 3, ttl: ONE_MINUTE } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request a 6-digit password-reset code for an email',
@@ -84,6 +93,7 @@ export class AuthController {
 
   @Public()
   @Post('verify-reset-code')
+  @Throttle({ default: { limit: 5, ttl: ONE_MINUTE } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Check an emailed password-reset code before choosing a new password',
@@ -95,6 +105,7 @@ export class AuthController {
 
   @Public()
   @Post('reset-password')
+  @Throttle({ default: { limit: 5, ttl: ONE_MINUTE } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Set a new password using the emailed 6-digit code' })
   async resetPassword(@Body() dto: ResetPasswordDto) {
@@ -103,6 +114,7 @@ export class AuthController {
 
   @Public()
   @Post('first-login/resend-code')
+  @Throttle({ default: { limit: 3, ttl: ONE_MINUTE } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Resend the first-login password-change code' })
   async resendFirstLoginCode(@Body() dto: FirstLoginResendCodeDto) {
@@ -111,6 +123,7 @@ export class AuthController {
 
   @Public()
   @Post('first-login/verify-code')
+  @Throttle({ default: { limit: 5, ttl: ONE_MINUTE } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Check the emailed first-login code before choosing a new password',
@@ -122,6 +135,7 @@ export class AuthController {
 
   @Public()
   @Post('first-login/complete')
+  @Throttle({ default: { limit: 5, ttl: ONE_MINUTE } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Set a new password with the emailed code and sign in (first login)',

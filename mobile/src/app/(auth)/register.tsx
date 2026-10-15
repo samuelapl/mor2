@@ -13,8 +13,7 @@ import {
   authApi,
   AuthHeader,
   FormMessage,
-  isValidEmail,
-  passwordIssueKey,
+  registerSchema,
   useAuthFlowStore,
   useFormError,
   type RegisterBody,
@@ -56,27 +55,21 @@ export default function RegisterScreen() {
 
   const set = (field: Field) => (text: string) => setValues((v) => ({ ...v, [field]: text }));
 
-  const passwordKey = passwordIssueKey(values.password);
-  const errors: Partial<Record<Field, string>> = {
-    firstName: values.firstName.trim() ? undefined : t('common.required'),
-    lastName: values.lastName.trim() ? undefined : t('common.required'),
-    email: isValidEmail(values.email) ? undefined : t('auth.errors.invalidEmail'),
-    phone: values.phone.trim() ? undefined : t('common.required'),
-    password: passwordKey ? t(passwordKey) : undefined,
-    confirm: values.confirm === values.password ? undefined : t('auth.errors.passwordMismatch'),
-  };
-  const shown = (field: Field) => (touched ? (errors[field] ?? null) : null);
+  const validation = registerSchema.safeParse(values);
+  const fieldErrors = !validation.success ? validation.error.flatten().fieldErrors : {};
+  const shown = (field: Field) => (touched && fieldErrors[field]?.[0] ? t(fieldErrors[field][0]) : null);
 
   const submit = () => {
     setTouched(true);
-    if (Object.values(errors).some(Boolean)) return;
-    const tin = values.tin.trim();
+    const result = registerSchema.safeParse(values);
+    if (!result.success) return;
+    const tin = result.data.tin?.trim();
     register.mutate({
-      firstName: values.firstName.trim(),
-      lastName: values.lastName.trim(),
-      email: values.email.trim(),
-      phone: values.phone.trim(),
-      password: values.password,
+      firstName: result.data.firstName.trim(),
+      lastName: result.data.lastName.trim(),
+      email: result.data.email.trim(),
+      phone: result.data.phone.trim(),
+      password: result.data.password,
       locale,
       ...(tin ? { tin } : {}),
     });

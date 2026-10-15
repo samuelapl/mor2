@@ -6,6 +6,7 @@ export function ApiPaginatedResponse<T extends Type>(itemDto: T) {
     ApiOkResponse({
       schema: {
         properties: {
+          success: { type: 'boolean', example: true },
           data: {
             type: 'array',
             items: { $ref: getSchemaPath(itemDto) },
@@ -21,6 +22,7 @@ export function ApiPaginatedResponse<T extends Type>(itemDto: T) {
               hasPreviousPage: { type: 'boolean' },
             },
           },
+          timestamp: { type: 'string', example: '2026-10-15T05:00:00.000Z' },
         },
       },
     }),

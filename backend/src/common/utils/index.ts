@@ -9,3 +9,4 @@ export * from './course-progress.util';
 export * from './session-attendance.util';
 export * from './app-time.util';
 export * from './quiz-answer.util';
+export * from './sanitize.util';

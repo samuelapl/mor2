@@ -9,7 +9,7 @@ import {
   authApi,
   AuthHeader,
   FormMessage,
-  passwordIssueKey,
+  resetPasswordSchema,
   useAuthFlowStore,
   useFormError,
 } from '@/features/auth';
@@ -35,12 +35,15 @@ export default function ResetPasswordScreen() {
 
   if (!email || !code) return <Redirect href="/forgot-password" />;
 
-  const passwordKey = passwordIssueKey(password);
-  const mismatch = confirm !== password;
+  const validation = resetPasswordSchema.safeParse({ password, confirm });
+  const fieldErrors = !validation.success ? validation.error.flatten().fieldErrors : {};
+  const passwordError = touched && fieldErrors.password?.[0] ? t(fieldErrors.password[0]) : null;
+  const confirmError = touched && fieldErrors.confirm?.[0] ? t(fieldErrors.confirm[0]) : null;
 
   const submit = () => {
     setTouched(true);
-    if (!passwordKey && !mismatch) resetPassword.mutate();
+    const result = resetPasswordSchema.safeParse({ password, confirm });
+    if (result.success) resetPassword.mutate();
   };
 
   return (
@@ -53,7 +56,7 @@ export default function ResetPasswordScreen() {
         label={t('auth.newPassword')}
         value={password}
         onChangeText={setPassword}
-        error={touched && passwordKey ? t(passwordKey) : null}
+        error={passwordError}
         hint={t('auth.passwordHint')}
         password
         autoComplete="new-password"
@@ -63,7 +66,7 @@ export default function ResetPasswordScreen() {
         label={t('auth.confirmPassword')}
         value={confirm}
         onChangeText={setConfirm}
-        error={touched && mismatch ? t('auth.errors.passwordMismatch') : null}
+        error={confirmError}
         password
         autoComplete="new-password"
         returnKeyType="done"

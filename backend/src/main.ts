@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import * as express from 'express';
@@ -51,7 +51,8 @@ async function bootstrap() {
   // ── Global pipes, filters, interceptors ───────────
   app.useGlobalPipes(AppValidationPipe);
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new TransformInterceptor());
+  const reflector = app.get(Reflector);
+  app.useGlobalInterceptors(new TransformInterceptor(reflector));
 
   // ── API prefix ────────────────────────────────────
   app.setGlobalPrefix('api/v1');

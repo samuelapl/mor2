@@ -5,3 +5,4 @@ export * from './public.decorator';
 export * from './optional-auth.decorator';
 export * from './locale.decorator';
 export * from './api-paginated.decorator';
+export * from './bypass-transform.decorator';

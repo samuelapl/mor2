@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { Button, Input, Screen } from '@/components/ui';
-import { FormMessage, useFormError, useSessionStore } from '@/features/auth';
+import { editProfileSchema, FormMessage, useFormError, useSessionStore } from '@/features/auth';
 import { useUpdateProfile, type UpdateProfileBody } from '@/features/profile';
 
 export default function EditProfileScreen() {
@@ -19,18 +19,26 @@ export default function EditProfileScreen() {
   const [tin, setTin] = useState(user?.tin ?? '');
   const [touched, setTouched] = useState(false);
 
-  const firstError = touched && !firstName.trim() ? t('common.required') : null;
-  const lastError = touched && !lastName.trim() ? t('common.required') : null;
+  const validation = editProfileSchema.safeParse({ firstName, lastName, phone, tin });
+  const fieldErrors = !validation.success ? validation.error.flatten().fieldErrors : {};
+  const firstError = touched && fieldErrors.firstName?.[0] ? t(fieldErrors.firstName[0]) : null;
+  const lastError = touched && fieldErrors.lastName?.[0] ? t(fieldErrors.lastName[0]) : null;
 
   const save = () => {
     setTouched(true);
-    if (!firstName.trim() || !lastName.trim()) return;
+    const result = editProfileSchema.safeParse({ firstName, lastName, phone, tin });
+    if (!result.success) return;
     // Send only changed fields; the backend rejects unknown ones (spec §1.6).
     const body: UpdateProfileBody = {};
-    if (firstName.trim() !== user?.firstName) body.firstName = firstName.trim();
-    if (lastName.trim() !== user?.lastName) body.lastName = lastName.trim();
-    if (phone.trim() !== (user?.phone ?? '')) body.phone = phone.trim();
-    if (tin.trim() !== (user?.tin ?? '')) body.tin = tin.trim();
+    const validFirstName = result.data.firstName.trim();
+    const validLastName = result.data.lastName.trim();
+    const validPhone = result.data.phone?.trim() ?? '';
+    const validTin = result.data.tin?.trim() ?? '';
+
+    if (validFirstName !== user?.firstName) body.firstName = validFirstName;
+    if (validLastName !== user?.lastName) body.lastName = validLastName;
+    if (validPhone !== (user?.phone ?? '')) body.phone = validPhone;
+    if (validTin !== (user?.tin ?? '')) body.tin = validTin;
     if (Object.keys(body).length === 0) {
       router.back();
       return;

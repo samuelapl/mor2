@@ -7,8 +7,8 @@ import { Button, Input, Screen } from '@/components/ui';
 import {
   authApi,
   AuthHeader,
+  forgotPasswordSchema,
   FormMessage,
-  isValidEmail,
   useAuthFlowStore,
   useFormError,
 } from '@/features/auth';
@@ -28,11 +28,17 @@ export default function ForgotPasswordScreen() {
     },
   });
   const formError = useFormError(request.error);
-  const emailError = touched && !isValidEmail(email) ? t('auth.errors.invalidEmail') : null;
+
+  const validation = forgotPasswordSchema.safeParse({ email: email.trim() });
+  const emailError =
+    touched && !validation.success
+      ? t(validation.error.flatten().fieldErrors.email?.[0] ?? 'auth.errors.invalidEmail')
+      : null;
 
   const submit = () => {
     setTouched(true);
-    if (isValidEmail(email)) request.mutate(email.trim());
+    const result = forgotPasswordSchema.safeParse({ email: email.trim() });
+    if (result.success) request.mutate(result.data.email);
   };
 
   return (

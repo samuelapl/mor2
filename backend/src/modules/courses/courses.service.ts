@@ -21,6 +21,8 @@ import {
   buildPaginationArgs,
   buildPaginatedResponse,
   buildSearchFilter,
+  sanitizeRichHtml,
+  sanitizePlainText,
 } from '@common/utils';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { NotificationsService } from '@modules/notifications/notifications.service';
@@ -302,91 +304,102 @@ export class CoursesService {
   }
 
   async findById(id: string) {
-    const course = await this.prisma.course.findUnique({
-      where: { id },
-      include: {
-        owners: { include: { user: true } },
-        approvals: { include: { approver: true } },
-        trainers: { include: { user: true } },
-        modules: {
-          where: { deletedAt: null },
-          orderBy: { order: 'asc' },
-          include: {
-            attachments: { where: { lessonId: null } }, // lesson files also carry moduleId
-            assessments: {
-              where: { type: 'MODULE_ASSESSMENT' },
-              select: {
-                id: true,
-                titleEn: true,
-                titleAm: true,
-                passingScore: true,
-                timeLimitMinutes: true,
-              },
-            },
-            lessons: {
-              where: { deletedAt: null, parentId: null },
-              orderBy: { order: 'asc' },
-              include: {
-                attachments: true,
-                assessments: {
-                  where: { type: 'LESSON_ASSESSMENT' },
-                  select: {
-                    id: true,
-                    titleEn: true,
-                    titleAm: true,
-                    passingScore: true,
-                    timeLimitMinutes: true,
-                  },
-                },
-                subLessons: {
-                  where: { deletedAt: null },
-                  orderBy: { order: 'asc' },
-                  include: { attachments: true },
-                },
-              },
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const includeQuery = {
+      owners: { include: { user: true } },
+      approvals: { include: { approver: true } },
+      trainers: { include: { user: true } },
+      modules: {
+        where: { deletedAt: null },
+        orderBy: { order: 'asc' as const },
+        include: {
+          attachments: { where: { lessonId: null } }, // lesson files also carry moduleId
+          assessments: {
+            where: { type: 'MODULE_ASSESSMENT' as const },
+            select: {
+              id: true,
+              titleEn: true,
+              titleAm: true,
+              passingScore: true,
+              timeLimitMinutes: true,
             },
           },
-        },
-        assessments: {
-          where: { type: 'FINAL_ASSESSMENT' },
-          select: {
-            id: true,
-            titleEn: true,
-            titleAm: true,
-            passingScore: true,
-            timeLimitMinutes: true,
-            attachments: { orderBy: { createdAt: 'asc' } },
-          },
-        },
-        // Module and lesson files also carry courseId; keep only files attached to the course itself.
-        attachments: { where: { moduleId: null, lessonId: null, assessmentId: null } },
-        sessionPlans: {
-          orderBy: { order: 'asc' },
-          include: {
-            assessments: {
-              where: { type: 'SESSION_ASSESSMENT' },
-              orderBy: { createdAt: 'asc' },
-              select: {
-                id: true,
-                titleEn: true,
-                timeLimitMinutes: true,
+          lessons: {
+            where: { deletedAt: null, parentId: null },
+            orderBy: { order: 'asc' as const },
+            include: {
+              attachments: true,
+              assessments: {
+                where: { type: 'LESSON_ASSESSMENT' as const },
+                select: {
+                  id: true,
+                  titleEn: true,
+                  titleAm: true,
+                  passingScore: true,
+                  timeLimitMinutes: true,
+                },
               },
-            },
-            liveSession: {
-              select: {
-                id: true,
-                scheduledAt: true,
-                status: true,
-                trainerId: true,
-                platform: true,
-                durationMinutes: true,
-                deletedAt: true,
+              subLessons: {
+                where: { deletedAt: null },
+                orderBy: { order: 'asc' as const },
+                include: { attachments: true },
               },
             },
           },
         },
       },
-    });
+      assessments: {
+        where: { type: 'FINAL_ASSESSMENT' as const },
+        select: {
+          id: true,
+          titleEn: true,
+          titleAm: true,
+          passingScore: true,
+          timeLimitMinutes: true,
+          attachments: { orderBy: { createdAt: 'asc' as const } },
+        },
+      },
+      // Module and lesson files also carry courseId; keep only files attached to the course itself.
+      attachments: { where: { moduleId: null, lessonId: null, assessmentId: null } },
+      sessionPlans: {
+        orderBy: { order: 'asc' as const },
+        include: {
+          assessments: {
+            where: { type: 'SESSION_ASSESSMENT' as const },
+            orderBy: { createdAt: 'asc' as const },
+            select: {
+              id: true,
+              titleEn: true,
+              timeLimitMinutes: true,
+            },
+          },
+          liveSession: {
+            select: {
+              id: true,
+              scheduledAt: true,
+              status: true,
+              trainerId: true,
+              platform: true,
+              durationMinutes: true,
+              deletedAt: true,
+            },
+          },
+        },
+      },
+    };
+
+    const course = isUuid
+      ? await this.prisma.course.findUnique({
+          where: { id },
+          include: includeQuery,
+        })
+      : await this.prisma.course.findFirst({
+          where: {
+            code: { equals: id, mode: 'insensitive' },
+            deletedAt: null,
+          },
+          include: includeQuery,
+        });
 
     if (!course || course.deletedAt) {
       throw new NotFoundException('Course not found');
@@ -401,7 +414,7 @@ export class CoursesService {
     if (missingPlanIds.length > 0) {
       const fallbackSessions = await this.prisma.liveSession.findMany({
         where: {
-          courseId: id,
+          courseId: course.id,
           deletedAt: null,
           originalPlanId: { in: missingPlanIds },
         },
@@ -441,11 +454,11 @@ export class CoursesService {
    * Staff (owners, approvers, trainers, admins) see everything unlocked.
    */
   async findByIdForUser(id: string, user: AuthenticatedUser) {
-    await this.assertCanRead(id, user);
     const course = await this.findById(id);
+    await this.assertCanRead(course.id, user);
 
     const enrollment = await this.prisma.enrollment.findUnique({
-      where: { userId_courseId: { userId: user.id, courseId: id } },
+      where: { userId_courseId: { userId: user.id, courseId: course.id } },
       select: { status: true, enrolledAt: true },
     });
 
@@ -587,17 +600,17 @@ export class CoursesService {
 
     const course = await this.prisma.course.create({
       data: {
-        code: dto.code,
-        title: dto.title,
-        description: dto.description,
-        objectives: dto.objectives,
+        code: sanitizePlainText(dto.code) ?? dto.code,
+        title: sanitizePlainText(dto.title) ?? dto.title,
+        description: sanitizeRichHtml(dto.description),
+        objectives: sanitizeRichHtml(dto.objectives),
         category: dto.category,
-        department: dto.department,
-        targetAudience: dto.targetAudience,
+        department: sanitizePlainText(dto.department) ?? dto.department,
+        targetAudience: sanitizeRichHtml(dto.targetAudience),
         deliveryMethod: dto.deliveryMethod,
         deliveryMode,
         hasOnlineSessions: dto.hasOnlineSessions ?? false,
-        prerequisites: dto.prerequisites,
+        prerequisites: sanitizeRichHtml(dto.prerequisites),
         estimatedHours: dto.estimatedHours,
         thumbnailUrl: dto.thumbnailUrl,
         level: dto.level,
@@ -627,20 +640,20 @@ export class CoursesService {
     }
 
     const data: Prisma.CourseUpdateInput = {};
-    if (dto.code) data.code = dto.code;
-    if (dto.title) data.title = dto.title;
-    if (dto.description) data.description = dto.description;
-    if (dto.objectives) data.objectives = dto.objectives;
+    if (dto.code) data.code = sanitizePlainText(dto.code) ?? dto.code;
+    if (dto.title) data.title = sanitizePlainText(dto.title) ?? dto.title;
+    if (dto.description !== undefined) data.description = sanitizeRichHtml(dto.description);
+    if (dto.objectives !== undefined) data.objectives = sanitizeRichHtml(dto.objectives);
     if (dto.category !== undefined) data.category = dto.category;
-    if (dto.department !== undefined) data.department = dto.department;
-    if (dto.targetAudience !== undefined) data.targetAudience = dto.targetAudience;
+    if (dto.department !== undefined) data.department = sanitizePlainText(dto.department) ?? dto.department;
+    if (dto.targetAudience !== undefined) data.targetAudience = sanitizeRichHtml(dto.targetAudience);
     if (dto.deliveryMethod !== undefined) data.deliveryMethod = dto.deliveryMethod;
     if (dto.deliveryMode !== undefined) {
       assertDeliveryModeAllowed(dto.deliveryMode, course.deliveryMode);
       data.deliveryMode = dto.deliveryMode;
     }
     if (dto.hasOnlineSessions !== undefined) data.hasOnlineSessions = dto.hasOnlineSessions;
-    if (dto.prerequisites !== undefined) data.prerequisites = dto.prerequisites;
+    if (dto.prerequisites !== undefined) data.prerequisites = sanitizeRichHtml(dto.prerequisites);
     if (dto.estimatedHours !== undefined) data.estimatedHours = dto.estimatedHours;
     if (dto.thumbnailUrl) data.thumbnailUrl = dto.thumbnailUrl;
     if (dto.level) data.level = dto.level;

@@ -38,4 +38,5 @@ export {
   type ResetPasswordBody,
   type SessionPayload,
 } from './types/auth.types';
+export * from './utils/auth.schemas';
 export * from './utils/validation';

@@ -8,7 +8,7 @@ import { DevPanel } from '@/components/dev/DevPanel';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { AppText, Button, Input, Screen } from '@/components/ui';
 import { useThemeColors } from '@/core/theme/colors';
-import { AuthHeader, FormMessage, isValidEmail, useFormError, useLogin } from '@/features/auth';
+import { AuthHeader, FormMessage, loginSchema, useFormError, useLogin } from '@/features/auth';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -21,13 +21,16 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [touched, setTouched] = useState(false);
 
-  const emailError = touched && !isValidEmail(email) ? t('auth.errors.invalidEmail') : null;
-  const passwordError = touched && password.length === 0 ? t('common.required') : null;
+  const validation = loginSchema.safeParse({ email: email.trim(), password });
+  const fieldErrors = !validation.success ? validation.error.flatten().fieldErrors : {};
+  const emailError = touched && fieldErrors.email?.[0] ? t(fieldErrors.email[0]) : null;
+  const passwordError = touched && fieldErrors.password?.[0] ? t(fieldErrors.password[0]) : null;
 
   const submit = () => {
     setTouched(true);
-    if (!isValidEmail(email) || password.length === 0) return;
-    login.mutate({ email, password });
+    const result = loginSchema.safeParse({ email: email.trim(), password });
+    if (!result.success) return;
+    login.mutate({ email: result.data.email, password: result.data.password });
   };
 
   return (

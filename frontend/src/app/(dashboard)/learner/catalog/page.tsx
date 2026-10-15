@@ -116,7 +116,7 @@ export default function LearnerCatalogPage() {
                 deliveryDetail={enrolled ? enrollment?.venue?.branch : undefined}
                 onClick={() => {
                   if (enrolled) {
-                    router.push(`/learner/courses/${course.id}/learn`);
+                    router.push(`/learner/courses/${course.code || course.id}/learn`);
                   } else {
                     setOpenCourseId(course.id);
                   }
@@ -124,7 +124,7 @@ export default function LearnerCatalogPage() {
               >
                 {enrolled ? (
                   <EnrolledCourseActions
-                    courseId={course.id}
+                    courseId={course.code || course.id}
                     done={done}
                     isPerson={isPerson}
                     onViewVenue={

@@ -1,5 +1,7 @@
 export interface ApiEnvelope<T> {
+  success?: boolean;
   data: T;
+  meta?: unknown;
   timestamp: string;
 }
 
@@ -104,10 +106,26 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
         return undefined as unknown as T;
       }
       try {
-        const body = JSON.parse(text) as ApiEnvelope<unknown>;
-        // rawUrl → callers type T as ApiEnvelope<U> and get the full envelope back.
-        // Normal → callers type T as the business payload and get body.data.
-        return (options.rawUrl ? body : body.data) as unknown as T;
+        const body = JSON.parse(text) as any;
+        if (options.rawUrl) {
+          return body as unknown as T;
+        }
+
+        // Paginated responses ({ success, data, meta, ... }): return object containing data, meta, and backward-compatible fields
+        if (body && typeof body === 'object' && 'data' in body && 'meta' in body) {
+          return {
+            data: body.data,
+            meta: body.meta,
+            ...body,
+          } as unknown as T;
+        }
+
+        // Standard response: unwrap body.data if present, otherwise return body directly
+        if (body && typeof body === 'object' && 'data' in body) {
+          return body.data as unknown as T;
+        }
+
+        return body as unknown as T;
       } catch {
         return undefined as unknown as T;
       }

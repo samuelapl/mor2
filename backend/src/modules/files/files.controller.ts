@@ -12,6 +12,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -42,6 +43,7 @@ export class FilesController {
   ) {}
 
   @Post('upload')
+  @Throttle({ default: { limit: 15, ttl: 60_000 } })
   @Roles(
     RoleName.COURSE_OWNER,
     RoleName.TRAINER,

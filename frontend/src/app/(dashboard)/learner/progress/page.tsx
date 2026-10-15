@@ -106,7 +106,7 @@ export default function ProgressPage() {
                     )}
                     onClick={(e) => {
                       e.stopPropagation();
-                      router.push(`/learner/courses/${course.id}/learn`);
+                      router.push(`/learner/courses/${course.code || course.id}/learn`);
                     }}
                   >
                     {done ? (

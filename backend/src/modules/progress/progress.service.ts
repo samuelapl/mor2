@@ -124,7 +124,23 @@ export class ProgressService {
     }
   }
 
-  async getCourseProgress(userId: string, courseId: string) {
+  private async resolveCourseId(courseIdOrCode: string): Promise<string> {
+    if (!courseIdOrCode) return courseIdOrCode;
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseIdOrCode)) {
+      return courseIdOrCode;
+    }
+    if (!this.prisma?.course?.findFirst) {
+      return courseIdOrCode;
+    }
+    const course = await this.prisma.course.findFirst({
+      where: { code: { equals: courseIdOrCode, mode: 'insensitive' }, deletedAt: null },
+      select: { id: true },
+    });
+    return course?.id ?? courseIdOrCode;
+  }
+
+  async getCourseProgress(userId: string, courseIdOrCode: string) {
+    const courseId = await this.resolveCourseId(courseIdOrCode);
     const ratio = await this.policyService.getTimeRatio();
     const modules = await this.prisma.curriculumModule.findMany({
       where: { courseId, deletedAt: null },
@@ -696,7 +712,8 @@ export class ProgressService {
   }
 
   /** Public: used by AssessmentsService to gate module/lesson assessment access. */
-  async getUnlockState(userId: string, courseId: string) {
+  async getUnlockState(userId: string, courseIdOrCode: string) {
+    const courseId = await this.resolveCourseId(courseIdOrCode);
     return this.loadUnlockContext(userId, courseId);
   }
 
@@ -1034,7 +1051,8 @@ export class ProgressService {
     }
   }
 
-  async getCourseLearnersProgress(courseId: string) {
+  async getCourseLearnersProgress(courseIdOrCode: string) {
+    const courseId = await this.resolveCourseId(courseIdOrCode);
     const [modules, enrollments, assessments, globalPassMark] = await Promise.all([
       this.prisma.curriculumModule.findMany({
         where: { courseId, deletedAt: null },
@@ -1131,7 +1149,8 @@ export class ProgressService {
     });
   }
 
-  async resetCourseProgress(userId: string, courseId: string) {
+  async resetCourseProgress(userId: string, courseIdOrCode: string) {
+    const courseId = await this.resolveCourseId(courseIdOrCode);
     const modules = await this.prisma.curriculumModule.findMany({
       where: { courseId, deletedAt: null },
       select: { id: true },

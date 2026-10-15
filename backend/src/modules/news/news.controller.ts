@@ -19,7 +19,6 @@ import { CurrentUser, OptionalAuth, Public } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { NewsService } from './news.service';
 import { NewsEngagementService } from './news-engagement.service';
-import { NewsThrottlerGuard } from './news-throttler.guard';
 import {
   CreateNewsCommentDto,
   ListCommentsQueryDto,
@@ -31,7 +30,6 @@ const ONE_MINUTE = 60_000;
 
 /** Public news pages plus the reader interactions (reactions, comments) that need a login. */
 @ApiTags('news')
-@UseGuards(NewsThrottlerGuard)
 @Controller('news')
 export class NewsController {
   constructor(

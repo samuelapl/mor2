@@ -132,10 +132,20 @@ http.interceptors.request.use(async (config: RetriableConfig) => {
 
 http.interceptors.response.use(
   (response) => {
-    // Unwrap the TransformInterceptor envelope (spec §1.3).
-    const body = response.data as ApiEnvelope<unknown> | undefined;
-    if (body && typeof body === 'object' && 'data' in body && 'timestamp' in body) {
-      response.data = body.data;
+    // Unwrap the TransformInterceptor envelope
+    const body = response.data;
+    if (body && typeof body === 'object') {
+      // 1. Paginated response with top-level data and meta: { success, data, meta, ... }
+      if ('data' in body && 'meta' in body) {
+        response.data = {
+          data: body.data,
+          meta: body.meta,
+          ...body,
+        };
+      } else if ('data' in body && ('timestamp' in body || 'success' in body)) {
+        // 2. Standard single entity / unpaginated response
+        response.data = body.data;
+      }
     }
     return response;
   },

@@ -5,7 +5,9 @@
 
 /** Every successful response is wrapped by the backend TransformInterceptor (§1.3). */
 export interface ApiEnvelope<T> {
+  success?: boolean;
   data: T;
+  meta?: unknown;
   timestamp: string;
 }
 
@@ -34,9 +36,11 @@ export interface PaginationParams {
 
 /** Raw error body produced by the backend AllExceptionsFilter (§1.5). */
 export interface ApiErrorBody {
+  success?: boolean;
   statusCode: number;
   error: string;
   message: string | string[];
+  details?: string[];
   messageAm?: string[];
   locale?: string;
   path?: string;

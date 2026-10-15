@@ -202,7 +202,7 @@ export default function LearnerCoursesPage() {
               course={course}
               showStatus={false}
               progress={loading ? 0 : percent}
-              onClick={() => router.push(`/learner/courses/${course.id}/learn`)}
+              onClick={() => router.push(`/learner/courses/${course.code || course.id}/learn`)}
               deliveryMode={isPerson ? 'IN_PERSON_ONLY' : 'ONLINE_ONLY'}
               deliveryDetail={enrollment?.venue?.branch}
               extraBadge={
@@ -214,7 +214,7 @@ export default function LearnerCoursesPage() {
               }
             >
               <EnrolledCourseActions
-                courseId={course.id}
+                courseId={course.code || course.id}
                 done={done}
                 isPerson={isPerson}
                 onViewVenue={

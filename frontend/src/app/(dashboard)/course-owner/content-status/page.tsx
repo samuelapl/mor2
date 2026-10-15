@@ -110,7 +110,7 @@ export default function ContentStatusPage() {
               </Td>
               <Td className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Button size="sm" variant="outline" onClick={() => router.push(`/courses/${course.id}`)}>
+                  <Button size="sm" variant="outline" onClick={() => router.push(`/courses/${course.code || course.id}`)}>
                     <Eye className="h-3.5 w-3.5" />
                     {t('contentStatusPage.details')}
                   </Button>

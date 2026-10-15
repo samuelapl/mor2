@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, ChevronDown, Eye, EyeOff, KeyRound, Loader2, Lock, Mail } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { MOCK_ACCOUNTS, MOCK_PASSWORD } from '@/constants/auth';
 import { ROLE_LABELS, ROLE_PATHS, getRoleHomePath } from '@/constants/roles';
 import { ROLE_ICONS } from '@/constants/navigation';
@@ -12,6 +14,7 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
+import { loginSchema, type LoginFormValues } from '@/lib/validation/auth.schemas';
 
 const inputClass =
   'w-full rounded-xl border border-border bg-card px-3.5 py-2.5 pl-10 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
@@ -23,20 +26,26 @@ export default function LoginPage() {
   const login = useAuthStore((s) => s.login);
   const ready = useAuthStore((s) => s.ready);
   const { tRole, t } = useTranslation('auth');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [demoAccountsOpen, setDemoAccountsOpen] = useState(false);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
     if (submitting) return;
     setSubmitting(true);
-    setError(null);
+    setServerError(null);
     try {
-      const result = await login(email, password);
+      const result = await login(data.email, data.password);
       if (result.ok) {
         toast.success('Welcome back! Signing you in…');
         const redirect = new URLSearchParams(window.location.search).get('redirect');
@@ -45,15 +54,15 @@ export default function LoginPage() {
       } else if (result.passwordChangeRequired) {
         router.push('/first-login');
       } else if (result.emailVerificationRequired) {
-        const params = new URLSearchParams({ email: email.trim() });
+        const params = new URLSearchParams({ email: data.email.trim() });
         if (result.devCode) params.set('dev', result.devCode);
         router.push(`/verify-email?${params.toString()}`);
       } else {
-        setError(result.message);
+        setServerError(result.message);
         toast.error(result.message || 'Invalid credentials.');
       }
     } catch {
-      setError('Unable to connect to service. Please try again.');
+      setServerError('Unable to connect to service. Please try again.');
       toast.error('Unable to connect to service. Please try again.');
     } finally {
       setSubmitting(false);
@@ -61,9 +70,9 @@ export default function LoginPage() {
   };
 
   const fillAccount = (accountEmail: string) => {
-    setEmail(accountEmail);
-    setPassword(MOCK_PASSWORD);
-    setError(null);
+    setValue('email', accountEmail, { shouldValidate: false });
+    setValue('password', MOCK_PASSWORD, { shouldValidate: false });
+    setServerError(null);
   };
 
   return (
@@ -83,11 +92,7 @@ export default function LoginPage() {
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 sm:p-8">
           <div className="text-center">
-            <Link
-              href="/"
-              title={t('loginPage.backToHome')}
-              className="inline-block transition-opacity hover:opacity-80"
-            >
+            <Link href="/" title={t('loginPage.backToHome')} className="inline-block transition-opacity hover:opacity-80">
               <Image
                 src="/logo.jpg"
                 alt="Ministry of Revenues"
@@ -99,12 +104,10 @@ export default function LoginPage() {
             <h1 className="mt-5 font-display text-lg sm:text-2xl font-bold tracking-tight text-foreground">
               {t('loginPage.welcomeToMorELearningManagement')}
             </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              {t('loginPage.signIn')}
-            </p>
+            <p className="mt-1.5 text-sm text-muted-foreground">{t('loginPage.signIn')}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4">
             <div>
               <label htmlFor="email" className={labelClass}>
                 {t('forgotPasswordPage.emailAddress')}
@@ -114,17 +117,13 @@ export default function LoginPage() {
                 <input
                   id="email"
                   type="email"
-                  required
                   autoComplete="email"
-                  value={email}
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    setError(null);
-                  }}
                   placeholder="you@gmail.com"
-                  className={inputClass}
+                  className={cn(inputClass, errors.email && 'border-danger focus:border-danger focus:ring-danger/10')}
+                  {...register('email')}
                 />
               </div>
+              {errors.email && <p className="mt-1 text-xs text-danger">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -132,10 +131,7 @@ export default function LoginPage() {
                 <label htmlFor="password" className={labelClass}>
                   {t('loginPage.password')}
                 </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-[11px] font-semibold text-indigo-500 transition-colors hover:text-primary"
-                >
+                <Link href="/forgot-password" className="text-[11px] font-semibold text-indigo-500 transition-colors hover:text-primary">
                   {t('loginPage.forgotPassword')}
                 </Link>
               </div>
@@ -144,15 +140,10 @@ export default function LoginPage() {
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  required
                   autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    setError(null);
-                  }}
                   placeholder="••••••••"
-                  className={cn(inputClass, 'pr-10')}
+                  className={cn(inputClass, 'pr-10', errors.password && 'border-danger focus:border-danger focus:ring-danger/10')}
+                  {...register('password')}
                 />
                 <button
                   type="button"
@@ -163,13 +154,10 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {errors.password && <p className="mt-1 text-xs text-danger">{errors.password.message}</p>}
             </div>
 
-            {error ? (
-              <div className="rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
-                {error}
-              </div>
-            ) : null}
+            {serverError ? <div className="rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">{serverError}</div> : null}
 
             <button
               type="submit"
@@ -208,12 +196,7 @@ export default function LoginPage() {
               <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground transition-colors hover:text-primary">
                 <KeyRound className="h-3.5 w-3.5" />
                 {t('loginPage.demoAccounts')}
-                <ChevronDown
-                  className={cn(
-                    'h-3.5 w-3.5 transition-transform duration-200',
-                    demoAccountsOpen && 'rotate-180',
-                  )}
-                />
+                <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', demoAccountsOpen && 'rotate-180')} />
               </span>
               <span className="h-px flex-1 bg-border" />
             </button>
@@ -242,9 +225,7 @@ export default function LoginPage() {
                           <Icon className="h-4 w-4" />
                         </span>
                         <span className="min-w-0">
-                          <span className="block truncate text-xs font-semibold text-foreground">
-                            {tRole(account.role)}
-                          </span>
+                          <span className="block truncate text-xs font-semibold text-foreground">{tRole(account.role)}</span>
                           <span className="block truncate text-[11px] text-muted-foreground">
                             {account.email} · {account.password}
                           </span>

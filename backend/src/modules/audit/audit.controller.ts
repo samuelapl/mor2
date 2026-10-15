@@ -2,7 +2,7 @@ import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuditService } from './audit.service';
-import { Permissions } from '@common/decorators';
+import { BypassTransform, Permissions } from '@common/decorators';
 import { PaginationQuery } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -37,6 +37,7 @@ export class AuditController {
   }
 
   @Get('export')
+  @BypassTransform()
   @ApiOperation({ summary: 'Export audit logs as CSV' })
   async exportCsv(
     @Query()

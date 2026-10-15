@@ -198,9 +198,9 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
   useEffect(() => {
     if (open && enrolled && courseId && !justEnrolledRef.current) {
       onClose();
-      router.push(`/learner/courses/${courseId}/learn`);
+      router.push(`/learner/courses/${course?.code || courseId}/learn`);
     }
-  }, [open, enrolled, courseId, onClose, router]);
+  }, [open, enrolled, courseId, course?.code, onClose, router]);
 
   // Early return if not loaded or enrolled
   if (!course || enrolled) return null;
@@ -243,7 +243,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
     } else {
       justEnrolledRef.current = true;
       onClose();
-      router.push(`/learner/courses/${courseId}/learn`);
+      router.push(`/learner/courses/${course?.code || courseId}/learn`);
     }
   };
 

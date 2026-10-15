@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, KeyRound, Loader2, Mail, Send } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { forgotPassword } from '@/lib/api/auth';
-import { isValidEmail } from '@/constants/auth';
+import { forgotPasswordSchema, type ForgotPasswordFormValues } from '@/lib/validation/auth.schemas';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { cn } from '@/lib/utils';
 
 const inputClass =
   'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 pl-10 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
@@ -16,23 +19,25 @@ const inputClass =
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { lang, t } = useTranslation('auth');
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!isValidEmail(email)) {
-      setError(t('forgotPasswordPage.enterAValidEmailAddress'));
-      return;
-    }
-    setError(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
+
+  const onSubmit = async (data: ForgotPasswordFormValues) => {
+    setServerError(null);
     setSending(true);
     try {
-      await forgotPassword(email.trim().toLowerCase());
-      router.push(`/verify-code?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+      await forgotPassword(data.email.trim().toLowerCase());
+      router.push(`/verify-code?email=${encodeURIComponent(data.email.trim().toLowerCase())}`);
     } catch (err) {
-      setError(
+      setServerError(
         err instanceof Error
           ? err.message
           : t('forgotPasswordPage.couldNotSendTheCodeTry'),
@@ -66,7 +71,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4">
             <div>
               <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 {t('forgotPasswordPage.emailAddress')}
@@ -76,23 +81,21 @@ export default function ForgotPasswordPage() {
                 <input
                   id="email"
                   type="email"
-                  required
                   autoComplete="email"
                   autoFocus
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError(null);
-                  }}
                   placeholder="you@example.com"
-                  className={inputClass}
+                  className={cn(inputClass, errors.email && 'border-danger')}
+                  {...register('email')}
                 />
               </div>
+              {errors.email && (
+                <p className="mt-1 text-xs text-danger">{errors.email.message}</p>
+              )}
             </div>
 
-            {error && (
+            {serverError && (
               <div className="rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
-                {error}
+                {serverError}
               </div>
             )}
 

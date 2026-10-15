@@ -101,4 +101,41 @@ describe('CoursesService.visibilityWhere', () => {
       expect(await visibilityWhere(user)).toEqual({ status: CourseStatus.PUBLISHED });
     });
   });
+
+  describe('findById dual lookup', () => {
+    it('queries by id when identifier is a UUID', async () => {
+      const findUnique = jest.fn().mockResolvedValue({ id: '2d7e97a3-5ef6-44de-b22c-89fe037e6c18', code: 'CS101' });
+      const findFirst = jest.fn();
+      const mockPrisma = { course: { findUnique, findFirst } };
+      const s = new CoursesService(mockPrisma as any, new CourseStateMachine(), {} as any, {} as any);
+
+      const res = await s.findById('2d7e97a3-5ef6-44de-b22c-89fe037e6c18');
+      expect(findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: '2d7e97a3-5ef6-44de-b22c-89fe037e6c18' },
+        }),
+      );
+      expect(findFirst).not.toHaveBeenCalled();
+      expect(res.code).toBe('CS101');
+    });
+
+    it('queries by code (case-insensitive) when identifier is not a UUID', async () => {
+      const findUnique = jest.fn();
+      const findFirst = jest.fn().mockResolvedValue({ id: '2d7e97a3-5ef6-44de-b22c-89fe037e6c18', code: 'CS101' });
+      const mockPrisma = { course: { findUnique, findFirst } };
+      const s = new CoursesService(mockPrisma as any, new CourseStateMachine(), {} as any, {} as any);
+
+      const res = await s.findById('cs101');
+      expect(findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            code: { equals: 'cs101', mode: 'insensitive' },
+            deletedAt: null,
+          },
+        }),
+      );
+      expect(findUnique).not.toHaveBeenCalled();
+      expect(res.id).toBe('2d7e97a3-5ef6-44de-b22c-89fe037e6c18');
+    });
+  });
 });

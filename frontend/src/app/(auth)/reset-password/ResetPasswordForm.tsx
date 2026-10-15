@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle, KeyRound, Lock, Eye, EyeOff } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { resetPassword } from '@/lib/api/auth';
-import { passwordIssues } from '@/constants/auth';
+import { resetPasswordSchema, type ResetPasswordFormValues } from '@/lib/validation/auth.schemas';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
@@ -24,13 +26,19 @@ export default function ResetPasswordForm() {
   const email = searchParams.get('email') ?? '';
   const code = searchParams.get('code') ?? '';
 
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+  });
 
   // Guard: if someone navigates here directly without email/code, redirect back
   if (!email || !code) {
@@ -57,24 +65,14 @@ export default function ResetPasswordForm() {
     );
   }
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    const issue = passwordIssues(password);
-    if (issue) {
-      setError(issue);
-      return;
-    }
-    if (password !== confirm) {
-      setError(t('firstLoginForm.passwordsDoNotMatch'));
-      return;
-    }
-    setError(null);
+  const onSubmit = async (data: ResetPasswordFormValues) => {
+    setServerError(null);
     setSaving(true);
     try {
-      await resetPassword(email, code, password);
+      await resetPassword(email, code, data.password);
       setDone(true);
     } catch (err) {
-      setError(
+      setServerError(
         err instanceof Error
           ? err.message
           : t('resetPasswordForm.invalidOrExpiredCodeRequestA'),
@@ -128,7 +126,7 @@ export default function ResetPasswordForm() {
               </div>
 
               {/* ── Form ── */}
-              <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4">
                 <div>
                   <label htmlFor="password" className={labelClass}>
                     {t('firstLoginForm.newPassword')}
@@ -138,16 +136,11 @@ export default function ResetPasswordForm() {
                     <input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
-                      required
                       autoComplete="new-password"
                       autoFocus
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setError(null);
-                      }}
                       placeholder="••••••••"
-                      className={cn(inputClass, 'pr-10')}
+                      className={cn(inputClass, 'pr-10', errors.password && 'border-danger')}
+                      {...register('password')}
                     />
                     <button
                       type="button"
@@ -158,26 +151,22 @@ export default function ResetPasswordForm() {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  {errors.password && <p className="mt-1 text-xs text-danger">{errors.password.message}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="confirm" className={labelClass}>
+                  <label htmlFor="confirmPassword" className={labelClass}>
                     {t('firstLoginForm.confirmPassword')}
                   </label>
                   <div className="relative">
                     <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                     <input
-                      id="confirm"
+                      id="confirmPassword"
                       type={showConfirm ? 'text' : 'password'}
-                      required
                       autoComplete="new-password"
-                      value={confirm}
-                      onChange={(e) => {
-                        setConfirm(e.target.value);
-                        setError(null);
-                      }}
                       placeholder="••••••••"
-                      className={cn(inputClass, 'pr-10')}
+                      className={cn(inputClass, 'pr-10', errors.confirmPassword && 'border-danger')}
+                      {...register('confirmPassword')}
                     />
                     <button
                       type="button"
@@ -188,12 +177,13 @@ export default function ResetPasswordForm() {
                       {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  {errors.confirmPassword && <p className="mt-1 text-xs text-danger">{errors.confirmPassword.message}</p>}
                 </div>
 
-                {error && (
+                {serverError && (
                   <div className="rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
-                    {error}{' '}
-                    {error.includes('expired') || error.includes('Invalid') ? (
+                    {serverError}{' '}
+                    {serverError.includes('expired') || serverError.includes('Invalid') ? (
                       <Link href="/forgot-password" className="underline hover:text-danger">
                         {t('resetPasswordForm.requestANewCode2')}
                       </Link>

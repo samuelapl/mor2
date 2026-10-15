@@ -28,6 +28,11 @@ export function buildPaginatedResponse<T>(
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
     },
+    total,
+    page,
+    limit,
+    totalPages,
+    items: data,
   };
 }
 

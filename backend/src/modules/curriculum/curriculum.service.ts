@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CourseStatus, LessonContentType, RoleName } from '@prisma/client';
-import { deriveAttachmentFileKey } from '@common/utils';
+import { deriveAttachmentFileKey, sanitizeRichHtml, sanitizePlainText } from '@common/utils';
 import { PrismaService } from '@config/prisma.service';
 import { AuthenticatedUser } from '@common/interfaces';
 import { ProgressService } from '@modules/progress/progress.service';
@@ -95,9 +95,9 @@ export class CurriculumService {
         const createdModule = await tx.curriculumModule.create({
           data: {
             courseId,
-            title: mod.title,
-            description: mod.description,
-            objectives: mod.objectives,
+            title: sanitizePlainText(mod.title) ?? mod.title,
+            description: sanitizeRichHtml(mod.description),
+            objectives: sanitizeRichHtml(mod.objectives),
             durationMinutes: mod.durationMinutes,
             order: index,
             passingScore: mod.passingScore,
@@ -131,8 +131,8 @@ export class CurriculumService {
               data: {
                 moduleId: createdModule.id,
                 parentId: null,
-                title: lesson.title,
-                content: lesson.content,
+                title: sanitizePlainText(lesson.title) ?? lesson.title,
+                content: sanitizeRichHtml(lesson.content),
                 contentType: sanitizeLessonContentType(lesson.contentType),
                 durationMinutes: lesson.durationMinutes,
                 order: idx,
@@ -164,8 +164,8 @@ export class CurriculumService {
                   data: {
                     moduleId: createdModule.id,
                     parentId: createdLesson.id,
-                    title: sub.title,
-                    content: sub.content,
+                    title: sanitizePlainText(sub.title) ?? sub.title,
+                    content: sanitizeRichHtml(sub.content),
                     contentType: sanitizeLessonContentType(sub.contentType),
                     durationMinutes: sub.durationMinutes,
                     order: sIdx,
@@ -307,17 +307,17 @@ export class CurriculumService {
     const mod = await this.prisma.curriculumModule.create({
       data: {
         courseId,
-        title: dto.title || dto.titleEn || 'Module',
-        description: dto.description || dto.descriptionEn,
-        objectives: dto.objectives || dto.objectivesEn,
+        title: sanitizePlainText(dto.title || dto.titleEn) || 'Module',
+        description: sanitizeRichHtml(dto.description || dto.descriptionEn),
+        objectives: sanitizeRichHtml(dto.objectives || dto.objectivesEn),
         durationMinutes: dto.durationMinutes,
         order,
         passingScore: dto.passingScore,
         lessons: dto.lessons?.length
           ? {
               create: dto.lessons.map((lesson, idx) => ({
-                title: lesson.title || lesson.titleEn || 'Lesson',
-                content: lesson.content || lesson.contentEn,
+                title: sanitizePlainText(lesson.title || lesson.titleEn) || 'Lesson',
+                content: sanitizeRichHtml(lesson.content || lesson.contentEn),
                 contentType: (lesson.contentType as any) ?? 'DOCUMENT',
                 durationMinutes: lesson.durationMinutes,
                 order: idx,
@@ -387,9 +387,9 @@ export class CurriculumService {
     const updated = await this.prisma.curriculumModule.update({
       where: { id: moduleId },
       data: {
-        title: dto.title,
-        description: dto.description,
-        objectives: dto.objectives,
+        title: dto.title !== undefined ? (sanitizePlainText(dto.title) ?? dto.title) : undefined,
+        description: dto.description !== undefined ? sanitizeRichHtml(dto.description) : undefined,
+        objectives: dto.objectives !== undefined ? sanitizeRichHtml(dto.objectives) : undefined,
         durationMinutes: dto.durationMinutes,
         order: dto.order,
         passingScore: dto.passingScore,
@@ -553,8 +553,8 @@ export class CurriculumService {
         data: {
           moduleId,
           parentId: dto.parentId,
-          title: dto.title,
-          content: dto.content,
+          title: sanitizePlainText(dto.title) ?? dto.title,
+          content: sanitizeRichHtml(dto.content),
           contentType: sanitizeLessonContentType(dto.contentType),
           durationMinutes: dto.durationMinutes,
           order,
@@ -575,8 +575,8 @@ export class CurriculumService {
       data: {
         moduleId,
         parentId: null,
-        title: dto.title,
-        content: dto.content,
+        title: sanitizePlainText(dto.title) ?? dto.title,
+        content: sanitizeRichHtml(dto.content),
         contentType: sanitizeLessonContentType(dto.contentType),
         durationMinutes: dto.durationMinutes,
         order,
@@ -598,8 +598,8 @@ export class CurriculumService {
     const updated = await this.prisma.lesson.update({
       where: { id: lessonId },
       data: {
-        title: dto.title,
-        content: dto.content,
+        title: dto.title !== undefined ? (sanitizePlainText(dto.title) ?? dto.title) : undefined,
+        content: dto.content !== undefined ? sanitizeRichHtml(dto.content) : undefined,
         contentType: dto.contentType,
         durationMinutes: dto.durationMinutes,
         order: dto.order,

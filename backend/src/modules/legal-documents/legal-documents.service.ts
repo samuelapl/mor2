@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
+import { buildPaginatedResponse } from '@common/utils';
 import {
   CreateLegalDocumentDto,
   QueryLegalDocumentDto,
@@ -76,13 +77,7 @@ export class LegalDocumentsService {
       }),
     ]);
 
-    return {
-      data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return buildPaginatedResponse(data, total, page, limit);
   }
 
   async findOne(id: string) {

@@ -18,13 +18,17 @@ export class EnrollmentsService {
   ) {}
 
   async selfEnroll(userId: string, dto: CreateEnrollmentDto) {
-    const course = await this.prisma.course.findUnique({
-      where: { id: dto.courseId },
-    });
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dto.courseId);
+    const course = isUuid
+      ? await this.prisma.course.findUnique({ where: { id: dto.courseId } })
+      : await this.prisma.course.findFirst({
+          where: { code: { equals: dto.courseId, mode: 'insensitive' }, deletedAt: null },
+        });
 
     if (!course || course.deletedAt) {
       throw new NotFoundException('Course not found');
     }
+    dto.courseId = course.id;
 
     if (course.status !== 'PUBLISHED') {
       throw new BadRequestException('Course is not published');
@@ -211,7 +215,23 @@ export class EnrollmentsService {
     return buildPaginatedResponse(enrollments, total, page, limit);
   }
 
-  async findByCourse(courseId: string, query: PaginationQuery) {
+  private async resolveCourseId(courseIdOrCode: string): Promise<string> {
+    if (!courseIdOrCode) return courseIdOrCode;
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseIdOrCode)) {
+      return courseIdOrCode;
+    }
+    if (!this.prisma?.course?.findFirst) {
+      return courseIdOrCode;
+    }
+    const course = await this.prisma.course.findFirst({
+      where: { code: { equals: courseIdOrCode, mode: 'insensitive' }, deletedAt: null },
+      select: { id: true },
+    });
+    return course?.id ?? courseIdOrCode;
+  }
+
+  async findByCourse(courseIdOrCode: string, query: PaginationQuery) {
+    const courseId = await this.resolveCourseId(courseIdOrCode);
     const { page, limit, skip } = buildPaginationArgs(query);
     const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
 
@@ -234,7 +254,8 @@ export class EnrollmentsService {
     return buildPaginatedResponse(enrollments, total, page, limit);
   }
 
-  async bulkEnroll(courseId: string, userIds: string[]) {
+  async bulkEnroll(courseIdOrCode: string, userIds: string[]) {
+    const courseId = await this.resolveCourseId(courseIdOrCode);
     const course = await this.prisma.course.findUnique({
       where: { id: courseId },
     });

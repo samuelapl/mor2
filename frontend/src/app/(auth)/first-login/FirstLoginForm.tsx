@@ -4,13 +4,16 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Check, Hash, KeyRound, Lock, ShieldCheck } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import {
   readFirstLoginChallenge,
   resendFirstLoginCode,
   verifyFirstLoginCode,
 } from '@/lib/api/auth';
-import { MIN_PASSWORD_LENGTH, passwordIssues } from '@/constants/auth';
+import { MIN_PASSWORD_LENGTH } from '@/constants/auth';
+import { resetPasswordSchema, type ResetPasswordFormValues } from '@/lib/validation/auth.schemas';
 import { ROLE_PATHS, getRoleHomePath } from '@/constants/roles';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
@@ -63,13 +66,23 @@ export default function FirstLoginForm() {
   // The code is checked on its own first; the password form only opens once it passes.
   const [step, setStep] = useState<'code' | 'password'>('code');
   const [code, setCode] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
   const [resending, setResending] = useState(false);
+
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    watch: watchPassword,
+    formState: { errors: passwordErrors },
+  } = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+  });
+
+  const watchedPassword = watchPassword('password') || '';
+  const watchedConfirm = watchPassword('confirmPassword') || '';
 
   useEffect(() => {
     const ch = readFirstLoginChallenge();
@@ -147,23 +160,13 @@ export default function FirstLoginForm() {
     }
   };
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    const issue = passwordIssues(password);
-    if (issue) {
-      setError(issue);
-      return;
-    }
-    if (password !== confirm) {
-      setError(t('firstLoginForm.passwordsDoNotMatch'));
-      return;
-    }
+  const handleCompleteFirstLogin = async (data: ResetPasswordFormValues) => {
     setError(null);
     setSaving(true);
     const result = await completeFirstLogin({
       code,
-      newPassword: password,
-      confirmPassword: confirm,
+      newPassword: data.password,
+      confirmPassword: data.confirmPassword,
     });
     setSaving(false);
     if (result.ok) {
@@ -298,7 +301,7 @@ export default function FirstLoginForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+      <form onSubmit={handlePasswordSubmit(handleCompleteFirstLogin)} className="mt-7 space-y-4">
         <div>
           <label htmlFor="password" className={labelClass}>
             {t('firstLoginForm.newPassword')}
@@ -308,18 +311,16 @@ export default function FirstLoginForm() {
             <input
               id="password"
               type="password"
-              required
               autoFocus
               autoComplete="new-password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError(null);
-              }}
               placeholder="••••••••"
               className={inputClass}
+              {...registerPassword('password')}
             />
           </div>
+          {passwordErrors.password && (
+            <p className="mt-1 text-xs text-danger">{passwordErrors.password.message}</p>
+          )}
         </div>
 
         <div>
@@ -331,26 +332,24 @@ export default function FirstLoginForm() {
             <input
               id="confirm"
               type="password"
-              required
               autoComplete="new-password"
-              value={confirm}
-              onChange={(e) => {
-                setConfirm(e.target.value);
-                setError(null);
-              }}
               placeholder="••••••••"
               className={inputClass}
+              {...registerPassword('confirmPassword')}
             />
           </div>
+          {passwordErrors.confirmPassword && (
+            <p className="mt-1 text-xs text-danger">{passwordErrors.confirmPassword.message}</p>
+          )}
         </div>
 
         <ul className="grid grid-cols-2 gap-1 text-[11px]">
-          <Rule met={password.length >= MIN_PASSWORD_LENGTH}>
+          <Rule met={watchedPassword.length >= MIN_PASSWORD_LENGTH}>
             {t('firstLoginForm.characters', { MIN_PASSWORD_LENGTH })}
           </Rule>
-          <Rule met={/[A-Za-z]/.test(password)}>{t('firstLoginForm.aLetter')}</Rule>
-          <Rule met={/[0-9]/.test(password)}>{t('firstLoginForm.aNumber')}</Rule>
-          <Rule met={password.length > 0 && password === confirm}>
+          <Rule met={/[A-Za-z]/.test(watchedPassword)}>{t('firstLoginForm.aLetter')}</Rule>
+          <Rule met={/[0-9]/.test(watchedPassword)}>{t('firstLoginForm.aNumber')}</Rule>
+          <Rule met={watchedPassword.length > 0 && watchedPassword === watchedConfirm}>
             {t('firstLoginForm.passwordsMatch')}
           </Rule>
         </ul>

@@ -16,7 +16,8 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestj
 import { RoleName } from '@prisma/client';
 import { CertificatesService } from './certificates.service';
 import { PermissionsService } from '@modules/permissions/permissions.service';
-import { CurrentUser, Permissions, Public, Roles } from '@common/decorators';
+import { Throttle } from '@nestjs/throttler';
+import { BypassTransform, CurrentUser, Permissions, Public, Roles } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -146,6 +147,7 @@ export class CertificatesController {
   @Get(':id/download')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
+  @Throttle({ default: { limit: 15, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Get a signed download URL for the certificate PDF with optional language',
   })
@@ -165,8 +167,10 @@ export class CertificatesController {
   }
 
   @Get(':id/pdf')
+  @BypassTransform()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
+  @Throttle({ default: { limit: 15, ttl: 60_000 } })
   @ApiOperation({ summary: 'Directly stream certificate PDF binary for in-page download' })
   @ApiParam({ name: 'id', type: String })
   @ApiQuery({ name: 'lang', required: false, type: String })

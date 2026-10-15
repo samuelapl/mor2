@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -17,11 +17,13 @@ import {
   Phone,
   UserRound,
 } from 'lucide-react';
-import { isValidEmail, passwordIssues } from '@/constants/auth';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
+import { registerSchema, type RegisterFormValues } from '@/lib/validation/auth.schemas';
 
 const inputClass =
   'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 pl-10 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
@@ -30,66 +32,48 @@ const labelClass = 'mb-1.5 flex items-center gap-1 text-xs font-semibold text-se
 
 export default function RegisterPage() {
   const router = useRouter();
-  const register = useAuthStore((s) => s.register);
+  const registerUser = useAuthStore((s) => s.register);
   const ready = useAuthStore((s) => s.ready);
   const { t } = useTranslation('auth');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [tin, setTin] = useState('');
-  const [department, setDepartment] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const validate = (): string | null => {
-    if (!firstName.trim() || !lastName.trim()) return 'First name and last name are required.';
-    if (!isValidEmail(email)) return 'Please enter a valid email address.';
-    if (!phone.trim()) return 'Phone number is required.';
-    const pwdError = passwordIssues(password);
-    if (pwdError) return pwdError;
-    if (password !== confirmPassword) return 'Confirm password must match.';
-    return null;
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+  });
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    const localError = validate();
-    if (localError) {
-      setError(localError);
-      return;
-    }
-    setError(null);
+  const onSubmit = async (data: RegisterFormValues) => {
+    setServerError(null);
     setSubmitting(true);
     try {
-      const result = await register({
-        firstName,
-        lastName,
-        email,
-        phone,
-        tin: tin.trim() || undefined,
-        password,
-        confirmPassword,
-        department,
+      const result = await registerUser({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        tin: data.tin?.trim() || undefined,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+        department: data.department,
       });
       if (!result.ok) {
-        setError(result.message);
+        setServerError(result.message);
         toast.error(result.message || 'Failed to submit registration.');
         setSubmitting(false);
         return;
       }
-      toast.success(
-        t('registerPage.accountCreatedCheckYourEmailFor'),
-      );
+      toast.success(t('registerPage.accountCreatedCheckYourEmailFor'));
       const params = new URLSearchParams({ email: result.email });
       if (result.devCode) params.set('dev', result.devCode);
       router.push(`/verify-email?${params.toString()}`);
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setServerError('An unexpected error occurred. Please try again.');
       toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
@@ -135,62 +119,48 @@ export default function RegisterPage() {
           </div>
 
           <>
-              <form onSubmit={handleSubmit} className="mt-7 space-y-4" noValidate>
+              <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4" noValidate>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="firstName" className={labelClass}>
                       <span>{t('registerPage.firstName')}</span>
-                      <span className="text-red-500 font-bold" aria-hidden="true">
-                        *
-                      </span>
+                      <span className="text-red-500 font-bold" aria-hidden="true">*</span>
                       <span className="sr-only">(required)</span>
                     </label>
                     <div className="relative">
                       <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                       <input
                         id="firstName"
-                        required
                         aria-required="true"
-                        value={firstName}
-                        onChange={(event) => {
-                          setFirstName(event.target.value);
-                          setError(null);
-                        }}
-                        className={inputClass}
+                        className={cn(inputClass, errors.firstName && 'border-danger')}
+                        {...register('firstName')}
                       />
                     </div>
+                    {errors.firstName && <p className="mt-1 text-xs text-danger">{errors.firstName.message}</p>}
                   </div>
                   <div>
                     <label htmlFor="lastName" className={labelClass}>
                       <span>{t('registerPage.lastName')}</span>
-                      <span className="text-red-500 font-bold" aria-hidden="true">
-                        *
-                      </span>
+                      <span className="text-red-500 font-bold" aria-hidden="true">*</span>
                       <span className="sr-only">(required)</span>
                     </label>
                     <div className="relative">
                       <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                       <input
                         id="lastName"
-                        required
                         aria-required="true"
-                        value={lastName}
-                        onChange={(event) => {
-                          setLastName(event.target.value);
-                          setError(null);
-                        }}
-                        className={inputClass}
+                        className={cn(inputClass, errors.lastName && 'border-danger')}
+                        {...register('lastName')}
                       />
                     </div>
+                    {errors.lastName && <p className="mt-1 text-xs text-danger">{errors.lastName.message}</p>}
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="reg-email" className={labelClass}>
                     <span>{t('registerPage.email')}</span>
-                    <span className="text-red-500 font-bold" aria-hidden="true">
-                      *
-                    </span>
+                    <span className="text-red-500 font-bold" aria-hidden="true">*</span>
                     <span className="sr-only">(required)</span>
                   </label>
                   <div className="relative">
@@ -198,26 +168,20 @@ export default function RegisterPage() {
                     <input
                       id="reg-email"
                       type="email"
-                      required
                       aria-required="true"
                       autoComplete="email"
-                      value={email}
-                      onChange={(event) => {
-                        setEmail(event.target.value);
-                        setError(null);
-                      }}
-                      className={inputClass}
+                      className={cn(inputClass, errors.email && 'border-danger')}
+                      {...register('email')}
                     />
                   </div>
+                  {errors.email && <p className="mt-1 text-xs text-danger">{errors.email.message}</p>}
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="reg-password" className={labelClass}>
                       <span>{t('loginPage.password')}</span>
-                      <span className="text-red-500 font-bold" aria-hidden="true">
-                        *
-                      </span>
+                      <span className="text-red-500 font-bold" aria-hidden="true">*</span>
                       <span className="sr-only">(required)</span>
                     </label>
                     <div className="relative">
@@ -225,15 +189,10 @@ export default function RegisterPage() {
                       <input
                         id="reg-password"
                         type={showPassword ? 'text' : 'password'}
-                        required
                         aria-required="true"
                         autoComplete="new-password"
-                        value={password}
-                        onChange={(event) => {
-                          setPassword(event.target.value);
-                          setError(null);
-                        }}
-                        className={cn(inputClass, 'pr-10')}
+                        className={cn(inputClass, 'pr-10', errors.password && 'border-danger')}
+                        {...register('password')}
                       />
                       <button
                         type="button"
@@ -244,13 +203,12 @@ export default function RegisterPage() {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
+                    {errors.password && <p className="mt-1 text-xs text-danger">{errors.password.message}</p>}
                   </div>
                   <div>
                     <label htmlFor="confirmPassword" className={labelClass}>
                       <span>{t('firstLoginForm.confirmPassword')}</span>
-                      <span className="text-red-500 font-bold" aria-hidden="true">
-                        *
-                      </span>
+                      <span className="text-red-500 font-bold" aria-hidden="true">*</span>
                       <span className="sr-only">(required)</span>
                     </label>
                     <div className="relative">
@@ -258,15 +216,10 @@ export default function RegisterPage() {
                       <input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
-                        required
                         aria-required="true"
                         autoComplete="new-password"
-                        value={confirmPassword}
-                        onChange={(event) => {
-                          setConfirmPassword(event.target.value);
-                          setError(null);
-                        }}
-                        className={cn(inputClass, 'pr-10')}
+                        className={cn(inputClass, 'pr-10', errors.confirmPassword && 'border-danger')}
+                        {...register('confirmPassword')}
                       />
                       <button
                         type="button"
@@ -277,6 +230,7 @@ export default function RegisterPage() {
                         {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
+                    {errors.confirmPassword && <p className="mt-1 text-xs text-danger">{errors.confirmPassword.message}</p>}
                   </div>
                 </div>
                 <p className="text-[11px] text-subtle-foreground">
@@ -287,26 +241,20 @@ export default function RegisterPage() {
                   <div>
                     <label htmlFor="phone" className={labelClass}>
                       <span>{t('registerPage.phoneNumber')}</span>
-                      <span className="text-red-500 font-bold" aria-hidden="true">
-                        *
-                      </span>
+                      <span className="text-red-500 font-bold" aria-hidden="true">*</span>
                       <span className="sr-only">(required)</span>
                     </label>
                     <div className="relative">
                       <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                       <input
                         id="phone"
-                        required
                         aria-required="true"
-                        value={phone}
-                        onChange={(event) => {
-                          setPhone(event.target.value);
-                          setError(null);
-                        }}
                         placeholder="+2519…"
-                        className={inputClass}
+                        className={cn(inputClass, errors.phone && 'border-danger')}
+                        {...register('phone')}
                       />
                     </div>
+                    {errors.phone && <p className="mt-1 text-xs text-danger">{errors.phone.message}</p>}
                   </div>
 
                   <div>
@@ -320,21 +268,17 @@ export default function RegisterPage() {
                       <CreditCard className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                       <input
                         id="tin"
-                        value={tin}
-                        onChange={(event) => {
-                          setTin(event.target.value);
-                          setError(null);
-                        }}
                         placeholder="e.g. 0012345678"
                         className={inputClass}
+                        {...register('tin')}
                       />
                     </div>
                   </div>
                 </div>
 
-                {error ? (
+                {serverError ? (
                   <div className="rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
-                    {error}
+                    {serverError}
                   </div>
                 ) : null}
 

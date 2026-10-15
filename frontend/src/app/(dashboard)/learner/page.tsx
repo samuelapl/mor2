@@ -169,7 +169,7 @@ export default function LearnerDashboardPage() {
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {nextUp ? (
-                <Link href={`/learner/courses/${nextUp.id}/learn`}>
+                <Link href={`/learner/courses/${nextUp.code || nextUp.id}/learn`}>
                   <Button
                     size="md"
                     className="bg-card text-primary font-semibold hover:bg-primary-soft shadow-md shadow-white/10"

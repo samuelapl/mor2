@@ -31,8 +31,9 @@ import { NewsModule } from './modules/news/news.module';
 import { LegalDocumentsModule } from './modules/legal-documents/legal-documents.module';
 import { PreparedQuizModule } from './modules/prepared-quiz/prepared-quiz.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from './common/guards';
+import { RolesGuard, AppThrottlerGuard } from './common/guards';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { PermissionsGuard } from './modules/permissions/guards/permissions.guard';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { SessionReschedulerModule } from './modules/session-rescheduler/session-rescheduler.module';
@@ -41,6 +42,16 @@ import { LandingPageModule } from './modules/landing-page/landing-page.module';
 @Module({
   imports: [
     EventEmitterModule.forRoot(),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          name: 'default',
+          ttl: 60_000,
+          limit: 120,
+        },
+      ],
+      errorMessage: 'Too many requests — please wait a moment and try again',
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       validate,
@@ -80,6 +91,10 @@ import { LandingPageModule } from './modules/landing-page/landing-page.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AppThrottlerGuard,
     },
     {
       provide: APP_GUARD,

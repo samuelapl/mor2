@@ -6,7 +6,7 @@ import { FilesService } from '@modules/files/files.service';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { AuditService } from '@modules/audit/audit.service';
 import { PolicyService } from '@modules/policy/policy.service';
-import { computeCourseGrade, findMissingSessionAttendance } from '@common/utils';
+import { buildPaginatedResponse, computeCourseGrade, findMissingSessionAttendance } from '@common/utils';
 import { PDFDocument, PDFPage, RGB, StandardFonts, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import * as fs from 'fs';
@@ -122,13 +122,7 @@ export class CertificatesService {
 
     const itemsWithUrl = await Promise.all(items.map((c) => this.withDownloadUrl(c)));
 
-    return {
-      items: itemsWithUrl,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return buildPaginatedResponse(itemsWithUrl, total, page, limit);
   }
 
   async findById(id: string) {

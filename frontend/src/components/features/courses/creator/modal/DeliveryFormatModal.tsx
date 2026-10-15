@@ -5,7 +5,6 @@ import {
   Building2,
   Check,
   Globe2,
-  Layers,
   Radio,
   Sparkles,
   Users2,
@@ -64,16 +63,6 @@ export function DeliveryFormatModal({
       featuresKeys: ['deliveryFormatModal.venueRoomBookingIntegration', 'deliveryFormatModal.qrCodeAndPinAttendanceTracking', 'deliveryFormatModal.onSiteTrainerEvaluationGrading'],
       accentColor: 'amber',
       badgeBg: 'bg-warning-soft text-warning border-warning/20',
-    },
-    {
-      id: 'BOTH',
-      titleKey: 'deliveryFormatModal.hybridBlendedLearning',
-      badgeKey: 'deliveryFormatModal.blended',
-      descriptionKey: 'deliveryFormatModal.theBestOfBothWorldsLearners',
-      icon: Layers,
-      featuresKeys: ['deliveryFormatModal.fullSelfPacedDigitalModules', 'deliveryFormatModal.virtualSessionsLivekitZoomOrVenue', 'deliveryFormatModal.comprehensiveAssessmentOfficialCertifica'],
-      accentColor: 'emerald',
-      badgeBg: 'bg-success-soft text-success border-success/20',
     },
   ];
 

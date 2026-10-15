@@ -50,6 +50,8 @@ export function notificationLink(
 
   const slug = str('slug');
   if (slug) return to(`/news/${encodeURIComponent(slug)}`, 'news');
+  const courseCode = str('courseCode') || str('code');
+  if (courseCode) return to(`/learner/courses/${encodeURIComponent(courseCode)}`, 'course');
   const courseId = str('courseId');
   if (courseId) return to(`/learner/courses/${encodeURIComponent(courseId)}`, 'course');
   return to('/', 'app');

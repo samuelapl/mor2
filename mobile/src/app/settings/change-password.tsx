@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Alert } from '@/core/utils/alert';
 import { Button, Input, Screen } from '@/components/ui';
-import { FormMessage, passwordIssueKey, useFormError } from '@/features/auth';
+import { changePasswordSchema, FormMessage, useFormError } from '@/features/auth';
 import { useChangePassword } from '@/features/profile';
 
 export default function ChangePasswordScreen() {
@@ -17,14 +17,18 @@ export default function ChangePasswordScreen() {
   const [confirm, setConfirm] = useState('');
   const [touched, setTouched] = useState(false);
 
-  const nextKey = passwordIssueKey(next);
-  const mismatch = confirm !== next;
+  const validation = changePasswordSchema.safeParse({ current, next, confirm });
+  const fieldErrors = !validation.success ? validation.error.flatten().fieldErrors : {};
+  const currentError = touched && fieldErrors.current?.[0] ? t(fieldErrors.current[0]) : null;
+  const nextError = touched && fieldErrors.next?.[0] ? t(fieldErrors.next[0]) : null;
+  const confirmError = touched && fieldErrors.confirm?.[0] ? t(fieldErrors.confirm[0]) : null;
 
   const submit = () => {
     setTouched(true);
-    if (!current || nextKey || mismatch) return;
+    const result = changePasswordSchema.safeParse({ current, next, confirm });
+    if (!result.success) return;
     change.mutate(
-      { currentPassword: current, newPassword: next },
+      { currentPassword: result.data.current, newPassword: result.data.next },
       {
         onSuccess: () =>
           Alert.alert(t('screens.changePassword'), t('profile.passwordChanged'), [
@@ -40,7 +44,7 @@ export default function ChangePasswordScreen() {
         label={t('profile.currentPassword')}
         value={current}
         onChangeText={setCurrent}
-        error={touched && !current ? t('common.required') : null}
+        error={currentError}
         password
         autoComplete="current-password"
       />
@@ -48,7 +52,7 @@ export default function ChangePasswordScreen() {
         label={t('auth.newPassword')}
         value={next}
         onChangeText={setNext}
-        error={touched && nextKey ? t(nextKey) : null}
+        error={nextError}
         hint={t('auth.passwordHint')}
         password
         autoComplete="new-password"
@@ -58,7 +62,7 @@ export default function ChangePasswordScreen() {
         label={t('auth.confirmPassword')}
         value={confirm}
         onChangeText={setConfirm}
-        error={touched && mismatch ? t('auth.errors.passwordMismatch') : null}
+        error={confirmError}
         password
         autoComplete="new-password"
         returnKeyType="done"

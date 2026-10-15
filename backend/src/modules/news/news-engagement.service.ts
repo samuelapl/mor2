@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { NewsReactionType, NewsStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
-import { buildPaginatedResponse, buildPaginationArgs } from '@common/utils';
+import { buildPaginatedResponse, buildPaginationArgs, sanitizePlainText } from '@common/utils';
 import { ListCommentsQueryDto } from './dto';
 
 const PUBLISHED_WHERE = { status: NewsStatus.PUBLISHED, deletedAt: null } as const;
@@ -78,9 +78,11 @@ export class NewsEngagementService {
       throw new ForbiddenException('Comments are closed for this news');
     }
 
+    const cleanContent = sanitizePlainText(content) ?? '';
+
     // Stored and returned as plain text; the frontend renders it as text, never as HTML.
     const comment = await this.prisma.newsComment.create({
-      data: { newsId, userId, content },
+      data: { newsId, userId, content: cleanContent },
       include: { user: { select: COMMENT_AUTHOR_SELECT } },
     });
     return this.toPublicComment(comment, userId);
@@ -95,9 +97,11 @@ export class NewsEngagementService {
       throw new ForbiddenException('You can only edit your own comments');
     }
 
+    const cleanContent = sanitizePlainText(content) ?? '';
+
     const updated = await this.prisma.newsComment.update({
       where: { id: commentId },
-      data: { content },
+      data: { content: cleanContent },
       include: { user: { select: COMMENT_AUTHOR_SELECT } },
     });
     return this.toPublicComment(updated, userId);
