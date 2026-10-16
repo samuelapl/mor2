@@ -38,7 +38,6 @@ import { DynamicAttendanceModal } from '@/components/features/sessions/shared/Dy
 import { LearnerCheckInModal } from '@/components/features/sessions/in-person/LearnerCheckInModal';
 import { VenueDetailModal } from '@/components/features/sessions/in-person/VenueDetailModal';
 import { isInPersonSession } from '@/lib/session-mode';
-import { toast } from '@/lib/toast';
 
 export default function LearnerLiveSessionsPage() {
   const searchParams = useSearchParams();
@@ -143,20 +142,7 @@ export default function LearnerLiveSessionsPage() {
     6,
   );
 
-  const FIVE_MINUTES_MS = 5 * 60 * 1000;
-  const isTimeReached = (s: ApiLiveSession) => {
-    if (s.status === 'LIVE') return true;
-    if (!s.scheduledAt) return false;
-    return Date.now() >= new Date(s.scheduledAt).getTime() - FIVE_MINUTES_MS;
-  };
-
   const handleJoin = (session: ApiLiveSession) => {
-    if (!isTimeReached(session)) {
-      toast.info(
-        'This live session is coming soon. You can join 5 minutes before the scheduled start time.',
-      );
-      return;
-    }
     setError(null);
     setSuccessMsg(null);
     setActiveSession(session);

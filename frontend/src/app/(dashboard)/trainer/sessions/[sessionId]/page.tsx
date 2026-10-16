@@ -15,7 +15,6 @@ import { useQuizReadinessGate } from '@/components/features/prepared-quiz/useQui
 import { isInPersonSession } from '@/lib/session-mode';
 import { RichContent } from '@/components/ui/RichContent';
 import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
-import { toast } from '@/lib/toast';
 
 export default function SessionQuizPrepPage() {
   const params = useParams();
@@ -30,19 +29,7 @@ export default function SessionQuizPrepPage() {
   // The graded quiz must be prepared before the trainer can join the room.
   const quizGate = useQuizReadinessGate();
   const joinRoom = async () => {
-    if (!session) return;
-    const FIVE_MINUTES_MS = 5 * 60 * 1000;
-    const isTimeReached =
-      session.status === 'LIVE' ||
-      (session.scheduledAt &&
-        Date.now() >= new Date(session.scheduledAt).getTime() - FIVE_MINUTES_MS);
-    if (!isTimeReached) {
-      toast.info(
-        'This live session is coming soon. You can join the room 5 minutes before the scheduled start time.',
-      );
-      return;
-    }
-    if (await quizGate.guard(session.id)) setLiveWorkspaceOpen(true);
+    if (session && (await quizGate.guard(session.id))) setLiveWorkspaceOpen(true);
   };
 
   useEffect(() => {

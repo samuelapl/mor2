@@ -49,9 +49,9 @@ export class VirtualSessionsService {
     const isTimeReached =
       session.status === SessionStatus.LIVE ||
       (session.scheduledAt && Date.now() >= session.scheduledAt.getTime() - FIVE_MINUTES_MS);
-    if (!isTimeReached) {
+    if (!isTrainerOrStaff && !isTimeReached) {
       throw new BadRequestException(
-        'This live session is coming soon. You can join the live session 5 minutes before the scheduled start time.',
+        'You can join the live session 5 minutes before the scheduled start time.',
       );
     }
 
@@ -83,9 +83,9 @@ export class VirtualSessionsService {
       session.status === SessionStatus.LIVE ||
       (session.scheduledAt && Date.now() >= session.scheduledAt.getTime() - FIVE_MINUTES_MS);
 
-    if (!isTimeReached) {
+    if (!isAuthorizedStaff && !isTimeReached) {
       throw new BadRequestException(
-        'This live session is coming soon. You can join the live session 5 minutes before the scheduled start time.',
+        'You can join the live session 5 minutes before the scheduled start time.',
       );
     }
 

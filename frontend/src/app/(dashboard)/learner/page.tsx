@@ -29,7 +29,6 @@ import { VenueDetailModal } from '@/components/features/sessions/in-person/Venue
 import { isInPersonEnrollment, isInPersonSession } from '@/lib/session-mode';
 import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { toast } from '@/lib/toast';
 
 export default function LearnerDashboardPage() {
   const courses = useCourseStore((s) => s.courses);
@@ -357,21 +356,7 @@ export default function LearnerDashboardPage() {
                       <>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            const FIVE_MINUTES_MS = 5 * 60 * 1000;
-                            const isTimeReached =
-                              session.status === 'LIVE' ||
-                              (session.scheduledAt &&
-                                Date.now() >=
-                                  new Date(session.scheduledAt).getTime() - FIVE_MINUTES_MS);
-                            if (!isTimeReached) {
-                              toast.info(
-                                'This live session is coming soon. You can join 5 minutes before the scheduled start time.',
-                              );
-                              return;
-                            }
-                            setActiveLiveSession(session);
-                          }}
+                          onClick={() => setActiveLiveSession(session)}
                           className={
                             isLive
                               ? 'flex-1 bg-emerald-600 hover:bg-emerald-700 text-white'

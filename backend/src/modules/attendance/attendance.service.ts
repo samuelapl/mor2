@@ -375,15 +375,6 @@ export class AttendanceService {
 
   async recordJoin(sessionId: string, userId: string) {
     const session = await this.getSessionOrFail(sessionId);
-    const FIVE_MINUTES_MS = 5 * 60 * 1000;
-    const isTimeReached =
-      session.status === SessionStatus.LIVE ||
-      (session.scheduledAt && Date.now() >= session.scheduledAt.getTime() - FIVE_MINUTES_MS);
-    if (!isTimeReached) {
-      throw new BadRequestException(
-        'Cannot track attendance: this live session is coming soon and has not started yet.',
-      );
-    }
 
     let attendance;
     try {
@@ -441,16 +432,6 @@ export class AttendanceService {
 
   async recordHeartbeat(sessionId: string, userId: string, elapsedSeconds = 15) {
     const session = await this.getSessionOrFail(sessionId);
-    const FIVE_MINUTES_MS = 5 * 60 * 1000;
-    const isTimeReached =
-      session.status === SessionStatus.LIVE ||
-      (session.scheduledAt && Date.now() >= session.scheduledAt.getTime() - FIVE_MINUTES_MS);
-    if (!isTimeReached) {
-      throw new BadRequestException(
-        'Cannot track attendance: this live session is coming soon and has not started yet.',
-      );
-    }
-
     const scheduledSeconds = (session.durationMinutes ?? 60) * 60;
     const threshold = await this.getDefaultAttendanceThreshold();
 
