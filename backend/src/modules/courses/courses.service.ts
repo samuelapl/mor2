@@ -1032,20 +1032,14 @@ export class CoursesService {
     const affectedLearners = await this.prisma.enrollment.count({
       where: {
         courseId: id,
-        status: { not: EnrollmentStatus.DROPPED },
       },
     });
 
-    // Automatically delete/cancel active learner enrollments for this course
+    // Automatically delete learner enrollments for this course after confirmation
     if (affectedLearners > 0) {
-      await this.prisma.enrollment.updateMany({
+      await this.prisma.enrollment.deleteMany({
         where: {
           courseId: id,
-        },
-        data: {
-          status: EnrollmentStatus.DROPPED,
-          droppedAt: new Date(),
-          droppedReason: 'Course deleted by administrator/creator',
         },
       });
     }

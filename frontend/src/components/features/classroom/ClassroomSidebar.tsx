@@ -594,7 +594,7 @@ export function ClassroomSidebar({
                     toast.warning(
                       t('classroomSidebar.pleaseCompleteAllCourseLessonsCompleted', { completedLessons, totalLessons }),
                     );
-                  } else if (contentCompleted && !allLiveSessionsAttended) {
+                  } else if (!allLiveSessionsAttended) {
                     const next = missingSessions[0]!;
                     toast.warning(
                       `${t('classroomSidebar.youMustAttendAllScheduledLive')} ${

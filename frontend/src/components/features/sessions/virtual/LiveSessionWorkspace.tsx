@@ -1201,17 +1201,28 @@ export function LiveSessionWorkspace({
                     <RefreshCw className="h-3.5 w-3.5" />
                     Retry Connection
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setStandardModeFallback(true);
-                      setError(null);
-                    }}
-                    className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs"
-                  >
-                    <MonitorPlay className="h-3.5 w-3.5" />
-                    Continue in Standard Classroom
-                  </Button>
+                  {(() => {
+                    const isTimeNotReached = Boolean(
+                      (error && /5 minutes before|scheduled start time|not reached/i.test(error)) ||
+                      (session?.status === 'SCHEDULED' &&
+                        session?.scheduledAt &&
+                        Date.now() < new Date(session.scheduledAt).getTime() - 5 * 60 * 1000)
+                    );
+                    if (isTimeNotReached) return null;
+                    return (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setStandardModeFallback(true);
+                          setError(null);
+                        }}
+                        className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs"
+                      >
+                        <MonitorPlay className="h-3.5 w-3.5" />
+                        Continue in Standard Classroom
+                      </Button>
+                    );
+                  })()}
                 </div>
               </div>
             ) : conferenceMode === 'embedded' && joinUrl ? (

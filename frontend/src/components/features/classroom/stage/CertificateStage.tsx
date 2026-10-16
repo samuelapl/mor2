@@ -62,7 +62,10 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
 
   // The backend's eligibility verdict is the only source of truth: it requires all content,
   // every assessment passed, AND the weighted course grade at the global pass mark.
-  const isCompleted = !isInPerson && (progress ? progress.courseCompletion.certificateEligible : unlocked);
+  const isCompleted =
+    !isInPerson &&
+    (progress ? progress.courseCompletion.certificateEligible : unlocked) &&
+    missingLiveSessions(progress).length === 0;
 
   useEffect(() => {
     let mounted = true;

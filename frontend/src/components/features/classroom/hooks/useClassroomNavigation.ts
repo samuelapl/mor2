@@ -266,7 +266,7 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         moduleIndex: 9999,
         quizId: finalAssessment.id,
         quizKind: 'FINAL_ASSESSMENT',
-        unlocked: isOpenProgression || (contentCompleted && allLiveSessionsAttended),
+        unlocked: (isOpenProgression || contentCompleted) && allLiveSessionsAttended,
         completed: finalPassed,
         assessment: finalAssessment,
         isInPersonLocked: false,
@@ -286,8 +286,8 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
       title: 'Certificate of Completion',
       moduleId: 'final',
       moduleIndex: 10000,
-      unlocked: isCompleted,
-      completed: isCompleted,
+      unlocked: isCompleted && allLiveSessionsAttended,
+      completed: isCompleted && allLiveSessionsAttended,
       isInPersonLocked: false,
     });
 

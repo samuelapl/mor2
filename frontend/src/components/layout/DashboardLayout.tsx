@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
-import LearnerBottomNav from '@/components/layout/LearnerBottomNav';
 import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -13,8 +12,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const isClassroom = Boolean(pathname && /\/courses\/[^/]+\/learn(\/|$)/.test(pathname));
   // The staff course review page (/courses/[id]) is full-screen too, like the creator studio.
   const isCourseReview = Boolean(pathname && /^\/courses\/[^/]+\/?$/.test(pathname));
-  // Learner pages get a bottom tab bar on phones.
-  const isLearnerArea = Boolean(pathname && /^\/learner(\/|$)/.test(pathname));
 
   // Phones: the sidebar is a drawer. Close it on navigation and with Escape.
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -39,17 +36,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <Sidebar mobileOpen={drawerOpen} onMobileClose={() => setDrawerOpen(false)} />
       <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-card">
         <Header onMenuClick={() => setDrawerOpen(true)} menuOpen={drawerOpen} />
-        <main
-          className={cn(
-            'flex-1 overflow-y-auto overflow-x-hidden bg-background',
-            // Room for the bottom tab bar (and the iPhone home indicator) on phones.
-            isLearnerArea && 'pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0',
-          )}
-        >
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background">
           {children}
         </main>
       </div>
-      {isLearnerArea ? <LearnerBottomNav onMore={() => setDrawerOpen(true)} /> : null}
     </div>
   );
 }
