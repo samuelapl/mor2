@@ -33,6 +33,7 @@ import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { RichContent } from '@/components/ui/RichContent';
+import { toast } from '@/lib/toast';
 import { LiveSessionWorkspace } from '../virtual/LiveSessionWorkspace';
 import { SessionAttendanceModal } from './SessionAttendanceModal';
 import { isInPersonSession } from '@/lib/session-mode';
@@ -175,6 +176,17 @@ export function SessionDetailModal({
                 <Button
                   size="sm"
                   onClick={() => {
+                    const FIVE_MINUTES_MS = 5 * 60 * 1000;
+                    const isTimeReached =
+                      session.status === 'LIVE' ||
+                      (session.scheduledAt &&
+                        Date.now() >= new Date(session.scheduledAt).getTime() - FIVE_MINUTES_MS);
+                    if (!isTimeReached) {
+                      toast.info(
+                        'This live session is coming soon. You can join the room 5 minutes before the scheduled start time.',
+                      );
+                      return;
+                    }
                     if (onJoin) {
                       onJoin();
                       onClose();

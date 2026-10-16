@@ -596,6 +596,14 @@ export class LiveSessionsService {
     if (user) await assertCanRunSession(this.prisma, this.permissions, user, id);
     if (status === SessionStatus.LIVE && existing.status !== SessionStatus.LIVE) {
       await this.assertGradedQuizzesReady(id);
+      const FIVE_MINUTES_MS = 5 * 60 * 1000;
+      const isTimeReached =
+        !existing.scheduledAt || Date.now() >= existing.scheduledAt.getTime() - FIVE_MINUTES_MS;
+      if (!isTimeReached) {
+        throw new BadRequestException(
+          'This live session is coming soon. You can start the session 5 minutes before the scheduled start time.',
+        );
+      }
     }
 
     const updated = await this.prisma.liveSession.update({

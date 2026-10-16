@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
+  CalendarClock,
   Camera,
   CameraOff,
   CheckCircle2,
@@ -745,6 +746,19 @@ export function LiveSessionWorkspace({
     return `${baseUrl}#userInfo.displayName="${encodeURIComponent(name)}"&config.prejoinConfig.enabled=false&config.prejoinPageEnabled=false&config.requireDisplayName=false&config.enableWelcomePage=false&config.disableDeepLinking=true`;
   };
 
+  const FIVE_MINUTES_MS = 5 * 60 * 1000;
+  const isTimeNotReached = Boolean(
+    (error && /5 minutes before|scheduled start time|not reached|coming soon/i.test(error)) ||
+    (session?.status === 'SCHEDULED' &&
+      session?.scheduledAt &&
+      Date.now() < new Date(session.scheduledAt).getTime() - FIVE_MINUTES_MS)
+  );
+
+  const roomConnectedRef = useRef(false);
+  useEffect(() => {
+    roomConnectedRef.current = Boolean(liveKitToken || (conferenceMode === 'embedded' && joinUrl));
+  }, [liveKitToken, conferenceMode, joinUrl]);
+
   // 1. Initial Join and Audience Detection Setup
   useEffect(() => {
     if (!open) return;
@@ -758,7 +772,22 @@ export function LiveSessionWorkspace({
       (userRole === 'trainer' ? 'Trainer' : 'Participant');
 
     const init = async () => {
+      const isSessionTimeWindow =
+        session.status === 'LIVE' ||
+        (session.scheduledAt && Date.now() >= new Date(session.scheduledAt).getTime() - FIVE_MINUTES_MS);
+
+      if (!isSessionTimeWindow) {
+        if (!cancelled) {
+          setLoading(false);
+          setError(
+            'This live session is coming soon. You can join the room 5 minutes before the scheduled start time.',
+          );
+        }
+        return;
+      }
+
       try {
+        let tokenSuccess = false;
         // 1. For LIVEKIT sessions, prioritize fetching the room access token immediately
         if (isLiveKitSession) {
           try {
@@ -766,6 +795,7 @@ export function LiveSessionWorkspace({
             if (!cancelled) {
               setLiveKitToken(tkRes.token);
               if (tkRes.wsUrl) setLiveKitWsUrl(tkRes.wsUrl);
+              tokenSuccess = true;
             }
           } catch (tkErr: any) {
             if (!cancelled) {
@@ -781,38 +811,43 @@ export function LiveSessionWorkspace({
               const rawUrl = res?.joinUrl || session.externalUrl;
               if (rawUrl) {
                 setJoinUrl(formatJitsiUrl(rawUrl, displayName));
+                tokenSuccess = true;
               }
             }
           } catch {
             if (session.externalUrl && !cancelled) {
               setJoinUrl(formatJitsiUrl(session.externalUrl, displayName));
+              tokenSuccess = true;
             }
           }
         }
 
-        // 2. Check visibility permissions (non-blocking)
-        fetchSessionAttendanceVisibility(session.id)
-          .then((vis) => {
-            if (!cancelled) setVisibility(vis);
-          })
-          .catch(() => {});
+        // Only sync audience presence IF session access token succeeded!
+        if (tokenSuccess && !cancelled) {
+          // 2. Check visibility permissions (non-blocking)
+          fetchSessionAttendanceVisibility(session.id)
+            .then((vis) => {
+              if (!cancelled) setVisibility(vis);
+            })
+            .catch(() => {});
 
-        // 3. Optional audience Join / Rejoin sync (best-effort, non-blocking)
-        recordSessionJoin(session.id)
-          .then((joinRecord: any) => {
-            if (!cancelled && joinRecord) {
-              if (joinRecord.threshold) setPolicyThreshold(joinRecord.threshold);
-              if ((joinRecord.rejoinCount ?? 0) > 0) setRejoinDetected(true);
-              if (joinRecord.activeSeconds) setStaySeconds(joinRecord.activeSeconds);
-              if (joinRecord.percentage) setAttendancePercentage(joinRecord.percentage);
-              if (joinRecord.status === 'PRESENT') setAttendanceStatus('PRESENT');
-            }
-          })
-          .catch(() => {});
+          // 3. Optional audience Join / Rejoin sync (best-effort, non-blocking)
+          recordSessionJoin(session.id)
+            .then((joinRecord: any) => {
+              if (!cancelled && joinRecord) {
+                if (joinRecord.threshold) setPolicyThreshold(joinRecord.threshold);
+                if ((joinRecord.rejoinCount ?? 0) > 0) setRejoinDetected(true);
+                if (joinRecord.activeSeconds) setStaySeconds(joinRecord.activeSeconds);
+                if (joinRecord.percentage) setAttendancePercentage(joinRecord.percentage);
+                if (joinRecord.status === 'PRESENT') setAttendanceStatus('PRESENT');
+              }
+            })
+            .catch(() => {});
 
-        // 4. Learner self check-in (best-effort)
-        if (userRole === 'learner') {
-          void selfCheckIn(session.id, 'VIRTUAL').catch(() => {});
+          // 4. Learner self check-in (best-effort)
+          if (userRole === 'learner') {
+            void selfCheckIn(session.id, 'VIRTUAL').catch(() => {});
+          }
         }
       } catch (err) {
         if (!cancelled) setError('An error occurred while initializing the session room.');
@@ -823,9 +858,10 @@ export function LiveSessionWorkspace({
 
     void init();
 
-    // 2. Periodic presence heartbeat (runs every 15 seconds while user is in session)
+    // 2. Periodic presence heartbeat (runs every 15 seconds ONLY while user is actively connected in session)
     const heartbeatTimer = setInterval(async () => {
       if (cancelled) return;
+      if (!roomConnectedRef.current) return;
       try {
         const update = await recordSessionHeartbeat(session.id, 15);
         if (!cancelled && update) {
@@ -839,10 +875,11 @@ export function LiveSessionWorkspace({
       }
     }, 15000);
 
-    // 3. Tab close / unload detection: log Leave automatically
+    // 3. Tab close / unload detection: log Leave automatically if room was joined
     const handleBeforeUnload = () => {
-      // Beacon dispatch
-      navigator.sendBeacon(`/api/attendance/sessions/${session.id}/leave`);
+      if (roomConnectedRef.current) {
+        navigator.sendBeacon(`/api/attendance/sessions/${session.id}/leave`);
+      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
@@ -854,8 +891,10 @@ export function LiveSessionWorkspace({
       if (localStream) {
         localStream.getTracks().forEach((track) => track.stop());
       }
-      // Record leave
-      void recordSessionLeave(session.id).catch(() => {});
+      // Record leave only if room was joined
+      if (roomConnectedRef.current) {
+        void recordSessionLeave(session.id).catch(() => {});
+      }
     };
   }, [open, session.id]);
 
@@ -963,8 +1002,18 @@ export function LiveSessionWorkspace({
         theme="dark"
         title={
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-500/20 text-red-400 border border-danger/30">
-              <Radio className="h-4 w-4 animate-pulse" />
+            <span
+              className={`flex h-7 w-7 items-center justify-center rounded-lg border ${
+                isTimeNotReached
+                  ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                  : 'bg-red-500/20 text-red-400 border-danger/30'
+              }`}
+            >
+              {isTimeNotReached ? (
+                <CalendarClock className="h-4 w-4" />
+              ) : (
+                <Radio className="h-4 w-4 animate-pulse" />
+              )}
             </span>
             <span className="truncate text-white font-bold">
               {session.titleEn || 'Live Training Session'}
@@ -973,62 +1022,73 @@ export function LiveSessionWorkspace({
         }
         subtitle={`${courseCode ? `${courseCode} · ` : ''}${courseTitle || 'Training'} · Host: ${trainerDisplayName}`}
         badge={
-          <div className="flex items-center gap-2">
-            <Badge variant="green" dot>
-              Live Room
+          isTimeNotReached ? (
+            <Badge variant="amber" className="gap-1.5 font-semibold text-xs py-0.5 px-2.5">
+              <CalendarClock className="h-3.5 w-3.5" />
+              Coming Soon
             </Badge>
-            {rejoinDetected && <Badge variant="amber">Rejoined Session</Badge>}
-          </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Badge variant="green" dot>
+                Live Room
+              </Badge>
+              {rejoinDetected && <Badge variant="amber">Rejoined Session</Badge>}
+            </div>
+          )
         }
         actions={
           <div className="flex items-center gap-2">
-            {/* Real-time Stay & Calculation Status Pill */}
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition shadow-xs ${
-                isPresent
-                  ? 'border-success/30 bg-success-soft text-success'
-                  : 'border-warning/30 bg-warning-soft text-warning'
-              }`}
-              title={`Total stay duration: ${currentStayMinutes}m / ${sessionDurationMinutes}m (${attendancePercentage}%). ${
-                isPresent
-                  ? 'Verified Present (>= ' + policyThreshold + '%)'
-                  : 'Stay >= ' + policyThreshold + '% to be marked Present'
-              }`}
-            >
-              <Clock className="h-3.5 w-3.5" />
-              <span>
-                Stay: {currentStayMinutes}m / {sessionDurationMinutes}m ({attendancePercentage}%)
-              </span>
-              <span
-                className={`h-2 w-2 rounded-full ${
+            {/* Real-time Stay & Calculation Status Pill: ONLY when in active connected session */}
+            {!isTimeNotReached && (liveKitToken || (conferenceMode === 'embedded' && joinUrl)) && (
+              <div
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition shadow-xs ${
                   isPresent
-                    ? 'bg-emerald-500 ring-4 ring-emerald-400/30'
-                    : 'bg-amber-500 animate-ping'
+                    ? 'border-success/30 bg-success-soft text-success'
+                    : 'border-warning/30 bg-warning-soft text-warning'
                 }`}
-              />
-              <span>{isPresent ? 'Present' : 'Tracking…'}</span>
-            </div>
+                title={`Total stay duration: ${currentStayMinutes}m / ${sessionDurationMinutes}m (${attendancePercentage}%). ${
+                  isPresent
+                    ? 'Verified Present (>= ' + policyThreshold + '%)'
+                    : 'Stay >= ' + policyThreshold + '% to be marked Present'
+                }`}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                <span>
+                  Stay: {currentStayMinutes}m / {sessionDurationMinutes}m ({attendancePercentage}%)
+                </span>
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    isPresent
+                      ? 'bg-emerald-500 ring-4 ring-emerald-400/30'
+                      : 'bg-amber-500 animate-ping'
+                  }`}
+                />
+                <span>{isPresent ? 'Present' : 'Tracking…'}</span>
+              </div>
+            )}
 
             {/* Dynamic Attendance Modal Button */}
-            <Button
-              size="sm"
-              variant={visibility?.canView ? 'outline' : 'ghost'}
-              onClick={() => setAttendanceModalOpen(true)}
-              className="gap-1.5"
-              title={
-                visibility?.canView
-                  ? 'View live session attendees and stay calculation'
-                  : 'Attendance view is restricted by system administrator'
-              }
-            >
-              <Users className="h-3.5 w-3.5" />
-              Attendees
-              {visibility?.canView ? (
-                <span className="ml-0.5 rounded-full bg-primary-soft px-1.5 py-0.2 text-[10px] font-bold text-primary">
-                  Permitted
-                </span>
-              ) : null}
-            </Button>
+            {!isTimeNotReached && (
+              <Button
+                size="sm"
+                variant={visibility?.canView ? 'outline' : 'ghost'}
+                onClick={() => setAttendanceModalOpen(true)}
+                className="gap-1.5"
+                title={
+                  visibility?.canView
+                    ? 'View live session attendees and stay calculation'
+                    : 'Attendance view is restricted by system administrator'
+                }
+              >
+                <Users className="h-3.5 w-3.5" />
+                Attendees
+                {visibility?.canView ? (
+                  <span className="ml-0.5 rounded-full bg-primary-soft px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                    Permitted
+                  </span>
+                ) : null}
+              </Button>
+            )}
 
             {/* LiveKit Phase 2: Live Quiz & Polls button for trainers/staff */}
             {isLiveKitSession && isTrainerOrStaff && (
@@ -1166,6 +1226,102 @@ export function LiveSessionWorkspace({
                   />
                 </LiveKitRoom>
               </div>
+            ) : isTimeNotReached ? (
+              /* Professional Coming Soon view when session scheduled time is not reached */
+              <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6 max-w-lg mx-auto text-center">
+                <div className="relative">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-lg">
+                    <CalendarClock className="h-8 w-8" />
+                  </div>
+                  <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-indigo-500"></span>
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold">
+                    <Clock className="h-3.5 w-3.5" />
+                    Live Session Coming Soon
+                  </div>
+                  <h3 className="text-xl font-bold text-white tracking-tight">
+                    {session.titleEn || session.titleAm || 'Live Virtual Classroom'}
+                  </h3>
+                  <p className="text-sm text-subtle-foreground leading-relaxed max-w-md">
+                    This live session has not started yet. The virtual classroom room will open{' '}
+                    <span className="font-semibold text-indigo-300">5 minutes</span> before the scheduled start time.
+                  </p>
+                </div>
+
+                {session.scheduledAt && (
+                  <div className="w-full rounded-2xl border border-slate-800 bg-slate-900/80 p-4 space-y-2.5 text-left">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400 font-medium">Scheduled Time</span>
+                      <span className="text-slate-200 font-semibold">
+                        {new Date(session.scheduledAt).toLocaleString(undefined, {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })}
+                      </span>
+                    </div>
+                    {session.durationMinutes ? (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400 font-medium">Planned Duration</span>
+                        <span className="text-slate-200 font-semibold">{session.durationMinutes} minutes</span>
+                      </div>
+                    ) : null}
+                    {trainerDisplayName ? (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400 font-medium">Session Host</span>
+                        <span className="text-slate-200 font-semibold">{trainerDisplayName}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setLoading(true);
+                      const isNowReached =
+                        session.status === 'LIVE' ||
+                        (session.scheduledAt &&
+                          Date.now() >= new Date(session.scheduledAt).getTime() - 5 * 60 * 1000);
+                      if (!isNowReached) {
+                        setLoading(false);
+                        setError(
+                          'This live session is coming soon. You can join 5 minutes before the scheduled start time.',
+                        );
+                        return;
+                      }
+                      fetchLiveKitToken(session.id)
+                        .then((r) => {
+                          setLiveKitToken(r.token);
+                          if (r.wsUrl) setLiveKitWsUrl(r.wsUrl);
+                          setError(null);
+                        })
+                        .catch((err: any) => {
+                          setError(err?.message || 'Session is not yet open.');
+                        })
+                        .finally(() => setLoading(false));
+                    }}
+                    className="gap-2 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Check Availability
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleLeaveSession}
+                    className="gap-1.5 text-slate-400 hover:text-white hover:bg-slate-800"
+                  >
+                    Leave Room
+                  </Button>
+                </div>
+              </div>
             ) : isLiveKitSession && !liveKitToken && !standardModeFallback ? (
               /* LiveKit token unavailable — show error state with retry and fallback */
               <div className="flex flex-1 flex-col items-center justify-center gap-4 text-subtle-foreground p-6">
@@ -1201,28 +1357,17 @@ export function LiveSessionWorkspace({
                     <RefreshCw className="h-3.5 w-3.5" />
                     Retry Connection
                   </Button>
-                  {(() => {
-                    const isTimeNotReached = Boolean(
-                      (error && /5 minutes before|scheduled start time|not reached/i.test(error)) ||
-                      (session?.status === 'SCHEDULED' &&
-                        session?.scheduledAt &&
-                        Date.now() < new Date(session.scheduledAt).getTime() - 5 * 60 * 1000)
-                    );
-                    if (isTimeNotReached) return null;
-                    return (
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setStandardModeFallback(true);
-                          setError(null);
-                        }}
-                        className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs"
-                      >
-                        <MonitorPlay className="h-3.5 w-3.5" />
-                        Continue in Standard Classroom
-                      </Button>
-                    );
-                  })()}
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setStandardModeFallback(true);
+                      setError(null);
+                    }}
+                    className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs"
+                  >
+                    <MonitorPlay className="h-3.5 w-3.5" />
+                    Continue in Standard Classroom
+                  </Button>
                 </div>
               </div>
             ) : conferenceMode === 'embedded' && joinUrl ? (

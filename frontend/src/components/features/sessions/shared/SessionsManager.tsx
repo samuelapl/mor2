@@ -113,7 +113,20 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
   const canConductSession = canAny(["live_session.manage_all", "live_session.manage_own"]);
   // Staff can't start or join a session whose course quiz isn't prepared yet.
   const quizGate = useQuizReadinessGate();
+  const FIVE_MINUTES_MS = 5 * 60 * 1000;
+  const isTimeReached = (session: ApiLiveSession) => {
+    if (session.status === 'LIVE') return true;
+    if (!session.scheduledAt) return false;
+    return Date.now() >= new Date(session.scheduledAt).getTime() - FIVE_MINUTES_MS;
+  };
+
   const joinRoom = async (session: ApiLiveSession) => {
+    if (!isTimeReached(session)) {
+      toast.info(
+        "This live session is coming soon. You can join the room 5 minutes before the scheduled start time.",
+      );
+      return;
+    }
     if (canConductSession && !(await quizGate.guard(session.id))) return;
     setActiveJoinSession(session);
   };

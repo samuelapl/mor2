@@ -25,6 +25,7 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { fetchCourseAssessments } from '@/lib/api/quiz';
 import { fetchCourseLearnersProgress } from '@/lib/api/progress';
 import type { ApiLearnerProgress, ApiLiveSession } from '@/lib/api/types';
+import { toast } from '@/lib/toast';
 import PageShell from '@/components/shared/PageShell';
 import PageSection from '@/components/shared/PageSection';
 import { StatCard } from '@/components/ui/StatCard';
@@ -59,7 +60,20 @@ export default function TrainerDashboardPage() {
   const [activeLiveSession, setActiveLiveSession] = useState<ApiLiveSession | null>(null);
   // The graded quiz must be prepared before the trainer can start or join the session.
   const quizGate = useQuizReadinessGate();
+  const FIVE_MINUTES_MS = 5 * 60 * 1000;
+  const isTimeReached = (s: ApiLiveSession) => {
+    if (s.status === 'LIVE') return true;
+    if (!s.scheduledAt) return false;
+    return Date.now() >= new Date(s.scheduledAt).getTime() - FIVE_MINUTES_MS;
+  };
+
   const startSession = async (session: ApiLiveSession) => {
+    if (!isTimeReached(session)) {
+      toast.info(
+        'This live session is coming soon. You can join the room 5 minutes before the scheduled start time.',
+      );
+      return;
+    }
     if (await quizGate.guard(session.id)) setActiveLiveSession(session);
   };
   const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
