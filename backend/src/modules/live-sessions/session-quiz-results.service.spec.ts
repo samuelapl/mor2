@@ -81,4 +81,75 @@ describe('SessionQuizResultsService for a held round whose quiz moved to a later
     expect(mine).toMatchObject({ earnedPoints: 8, totalPoints: 10, scorePercent: 80 });
     expect(mine.recorded).toEqual({ score: 80, missed: false });
   });
+
+  it('shows multiple distinct quizzes in results when trainer asks multiple questions with quiz labels', async () => {
+    const multiPrisma: any = {
+      liveSession: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'session-multi',
+          titleEn: 'Live Session 2',
+          status: 'COMPLETED',
+          courseId: 'c1',
+          preparedQuizzes: [],
+        }),
+      },
+      attendanceLog: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            userId: 'u1',
+            timestamp: new Date('2026-10-16T10:00:00Z'),
+            metadata: {
+              questionId: 'q-live-1',
+              quizId: 'quiz-batch-1',
+              quizTitle: 'Pop Quiz 1',
+              questionTitle: 'What is A?',
+              options: ['Option 1', 'Option 2'],
+              selectedOptionIds: ['0'],
+              correctAnswer: 'Option 1',
+              isCorrect: true,
+            },
+          },
+          {
+            userId: 'u1',
+            timestamp: new Date('2026-10-16T10:05:00Z'),
+            metadata: {
+              questionId: 'q-live-2',
+              quizId: 'quiz-batch-2',
+              quizTitle: 'Pop Quiz 2',
+              questionTitle: 'What is B?',
+              options: ['Option X', 'Option Y'],
+              selectedOptionIds: ['1'],
+              correctAnswer: 'Option Y',
+              isCorrect: true,
+            },
+          },
+        ]),
+      },
+      assessmentAttempt: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      assessment: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      questionBankQuestion: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'q-live-1', question: 'What is A?', options: ['Option 1', 'Option 2'], correctAnswer: 'Option 1', points: 5 },
+          { id: 'q-live-2', question: 'What is B?', options: ['Option X', 'Option Y'], correctAnswer: 'Option Y', points: 5 },
+        ]),
+      },
+      enrollment: { findMany: jest.fn().mockResolvedValue([{ userId: 'u1' }]) },
+      user: {
+        findMany: jest.fn().mockResolvedValue([{ id: 'u1', firstName: 'A', lastName: 'B', email: 'a@b.c' }]),
+      },
+      attendance: { findMany: jest.fn().mockResolvedValue([{ userId: 'u1', status: 'PRESENT' }]) },
+    };
+
+    const results = await new SessionQuizResultsService(multiPrisma).forStaff('session-multi');
+
+    expect(results.quizzes).toHaveLength(2);
+    expect(results.quizzes[0]!.title).toBe('Pop Quiz 1');
+    expect(results.quizzes[0]!.questions[0]!.id).toBe('q-live-1');
+    expect(results.quizzes[1]!.title).toBe('Pop Quiz 2');
+    expect(results.quizzes[1]!.questions[0]!.id).toBe('q-live-2');
+  });
 });

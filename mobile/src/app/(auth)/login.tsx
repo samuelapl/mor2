@@ -1,8 +1,8 @@
-import { Link } from 'expo-router';
-import { Lock, Mail } from 'lucide-react-native';
+import { Link, router } from 'expo-router';
+import { ArrowLeft, Lock, Mail } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 
 import { DevPanel } from '@/components/dev/DevPanel';
 import { LanguageToggle } from '@/components/LanguageToggle';
@@ -35,7 +35,16 @@ export default function LoginScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} contentClassName="flex-grow justify-between p-6">
-      <View className="w-full flex-row justify-end pt-1">
+      <View className="w-full flex-row items-center justify-between pt-1">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+          hitSlop={8}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          className="-ml-1 p-1 rounded-full active:opacity-60"
+        >
+          <ArrowLeft size={22} color={colors.text} />
+        </Pressable>
         <LanguageToggle />
       </View>
 

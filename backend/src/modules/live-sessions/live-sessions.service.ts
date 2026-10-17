@@ -837,6 +837,8 @@ export class LiveSessionsService {
         metadata: {
           questionId: dto.questionId,
           questionTitle: dto.questionTitle,
+          quizId: dto.quizId,
+          quizTitle: dto.quizTitle,
           options: dto.options,
           correctAnswer: dto.correctAnswer,
           selectedOptionIds: dto.selectedOptionIds,

@@ -234,6 +234,8 @@ export function submitLiveSessionQuizResponse(
     options?: string[];
     correctAnswer?: string;
     points?: number;
+    quizId?: string;
+    quizTitle?: string;
   },
 ): Promise<{ isCorrect: boolean; score: number; explanation?: string }> {
   return api<{ isCorrect: boolean; score: number; explanation?: string }>(

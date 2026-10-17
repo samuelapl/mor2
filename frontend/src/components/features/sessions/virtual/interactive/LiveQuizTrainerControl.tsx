@@ -1484,8 +1484,10 @@ export function LiveQuizTrainerControl({
     setCurrentQueueIndex(0);
     setSelectedQuestion(apiQuestions[0]);
 
+    const quizGroupId = quizGroup.id;
     const allPayloads = apiQuestions.map((item, idx) => ({
       ...buildQuizPayload(item),
+      quizId: quizGroupId,
       timeLimitSeconds: totalSeconds,
       quizTitle: quizGroup.title,
       questionIndex: idx,
@@ -1496,6 +1498,7 @@ export function LiveQuizTrainerControl({
       type: 'QUIZ_START',
       payload: {
         ...allPayloads[0],
+        quizId: quizGroupId,
         timeLimitSeconds: totalSeconds,
         quizTitle: quizGroup.title,
         questionIndex: 0,
@@ -1534,9 +1537,14 @@ export function LiveQuizTrainerControl({
       (activeQList.length > 1
         ? bankQuizLabel.trim() || `Quiz ${quizHistory.length + 1}`
         : bankQuizLabel.trim() || undefined);
+    const resolvedQuizId =
+      (isNavigatingSameQueue ? activeQuiz?.quizId : undefined) ||
+      (activeQuiz && activeQuiz.quizTitle === resolvedTitle ? activeQuiz.quizId : undefined) ||
+      `quiz_${Date.now()}`;
     const totalSeconds = timerMinutes * 60;
     const quizPayload = {
       ...buildQuizPayload(q),
+      quizId: resolvedQuizId,
       timeLimitSeconds: totalSeconds,
       ...(resolvedTitle ? { quizTitle: resolvedTitle } : {}),
     };
@@ -1546,6 +1554,7 @@ export function LiveQuizTrainerControl({
       activeQList && activeQList.length > 0
         ? activeQList.map((item, idx) => ({
             ...buildQuizPayload(item),
+            quizId: resolvedQuizId,
             timeLimitSeconds: totalSeconds,
             ...(resolvedTitle ? { quizTitle: resolvedTitle } : {}),
             questionIndex: idx,
@@ -1557,6 +1566,7 @@ export function LiveQuizTrainerControl({
       type: 'QUIZ_START',
       payload: {
         ...quizPayload,
+        quizId: resolvedQuizId,
         timeLimitSeconds: totalSeconds,
         ...(resolvedTitle ? { quizTitle: resolvedTitle } : {}),
         questionIndex: activeIdx,

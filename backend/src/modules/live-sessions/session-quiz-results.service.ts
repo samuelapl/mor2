@@ -6,6 +6,8 @@ import { isAnswerCorrect } from '@common/utils';
 interface QuizResponseMeta {
   questionId?: string;
   questionTitle?: string;
+  quizId?: string;
+  quizTitle?: string;
   options?: unknown[];
   correctAnswer?: string;
   selectedOptionIds?: string[];
@@ -240,7 +242,7 @@ export class SessionQuizResultsService {
       });
     }
 
-    // Questions answered live that are not in any prepared group (broadcast straight from the bank).
+    // Questions answered live that are not in any prepared group (broadcast straight from the bank or ad-hoc).
     const grouped = new Set(quizzes.flatMap((quiz) => quiz.questions.map((q) => q.id)));
     const otherIds = [...metaByQuestion.keys()].filter((id) => !grouped.has(id));
     if (otherIds.length > 0) {
@@ -256,27 +258,91 @@ export class SessionQuizResultsService {
         },
       });
       const bankById = new Map(bank.map((q) => [q.id, q]));
-      quizzes.push({
-        id: OTHER_QUIZ_ID,
-        title: 'Other questions',
-        graded: false,
-        totalPoints: 0,
-        questions: otherIds.map((id) => {
-          const q = bankById.get(id);
-          const meta = metaByQuestion.get(id)!;
+
+      // Group questions by quiz: by quizId or quizTitle if available, or individually by question/title
+      const otherGroups = new Map<string, { id: string; title: string; questionIds: string[] }>();
+      let autoIndex = 1;
+
+      for (const qId of otherIds) {
+        const meta = metaByQuestion.get(qId);
+        const qBank = bankById.get(qId);
+        const rawTitle = meta?.quizTitle?.trim();
+        const rawQuizId = meta?.quizId?.trim();
+
+        // Check if question's quizId matches an existing prepared quiz that was empty
+        const matchingPrepared = rawQuizId
+          ? session.preparedQuizzes.find((pq) => pq.id === rawQuizId)
+          : null;
+        if (matchingPrepared) {
+          let target = quizzes.find((q) => q.id === matchingPrepared.id);
+          if (!target) {
+            target = {
+              id: matchingPrepared.id,
+              title: matchingPrepared.title,
+              graded: Boolean(matchingPrepared.assessmentId),
+              totalPoints: 0,
+              questions: [],
+            };
+            quizzes.push(target);
+          }
           const options = (
-            Array.isArray(q?.options) ? (q!.options as unknown[]) : (meta.options ?? [])
+            Array.isArray(qBank?.options) ? (qBank!.options as unknown[]) : (meta?.options ?? [])
           ).map(String);
-          return {
-            id,
-            type: q?.type ?? 'MULTIPLE_CHOICE',
-            question: q?.question ?? meta.questionTitle ?? 'Live question',
+          target.questions.push({
+            id: qId,
+            type: qBank?.type ?? 'MULTIPLE_CHOICE',
+            question: qBank?.question ?? meta?.questionTitle ?? 'Live question',
             options,
-            correctAnswer: asText(q?.correctAnswer ?? meta.correctAnswer, options),
-            points: (meta as any).points ?? 1,
-          };
-        }),
-      });
+            correctAnswer: asText(qBank?.correctAnswer ?? meta?.correctAnswer, options),
+            points: (meta as any)?.points ?? 1,
+          });
+          continue;
+        }
+
+        const groupKey =
+          rawQuizId ||
+          rawTitle ||
+          (otherIds.length === 1 ? OTHER_QUIZ_ID : `live_q_${qId}`);
+        const groupTitle =
+          rawTitle ||
+          (rawQuizId ? `Quiz ${rawQuizId}` : null) ||
+          meta?.questionTitle ||
+          qBank?.question ||
+          (otherIds.length === 1 ? 'Other questions' : `Quiz ${autoIndex++}`);
+
+        if (!otherGroups.has(groupKey)) {
+          otherGroups.set(groupKey, {
+            id: rawQuizId || (groupKey.startsWith('live_q_') ? groupKey : `live-quiz-${otherGroups.size + 1}`),
+            title: groupTitle,
+            questionIds: [],
+          });
+        }
+        otherGroups.get(groupKey)!.questionIds.push(qId);
+      }
+
+      for (const group of otherGroups.values()) {
+        quizzes.push({
+          id: group.id,
+          title: group.title,
+          graded: false,
+          totalPoints: 0,
+          questions: group.questionIds.map((id) => {
+            const q = bankById.get(id);
+            const meta = metaByQuestion.get(id)!;
+            const options = (
+              Array.isArray(q?.options) ? (q!.options as unknown[]) : (meta?.options ?? [])
+            ).map(String);
+            return {
+              id,
+              type: q?.type ?? 'MULTIPLE_CHOICE',
+              question: q?.question ?? meta?.questionTitle ?? 'Live question',
+              options,
+              correctAnswer: asText(q?.correctAnswer ?? meta?.correctAnswer, options),
+              points: (meta as any)?.points ?? 1,
+            };
+          }),
+        });
+      }
     }
 
     // Learners: everyone enrolled plus anyone who answered (staff view), or just the requester.

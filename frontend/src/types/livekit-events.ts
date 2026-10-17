@@ -26,6 +26,7 @@ export interface LiveQuizPayload {
   totalQuestions?: number;
   allQuestions?: LiveQuizPayload[];
   quizTitle?: string;
+  quizId?: string;
 }
 
 export interface LiveQuizRevealPayload {

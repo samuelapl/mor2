@@ -44,6 +44,8 @@ export const liveSessionApi = {
       questionTitle?: string;
       options?: string[];
       correctAnswer?: string;
+      quizId?: string;
+      quizTitle?: string;
     },
   ) => api.post(endpoints.liveSessions.quizResponse(id), dto),
   quizResultsMe: (id: string) =>

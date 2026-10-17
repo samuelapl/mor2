@@ -5,6 +5,7 @@ export default function AuthLayout() {
   const { t } = useTranslation();
   return (
     <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="register" options={{ title: t('screens.register') }} />
       <Stack.Screen

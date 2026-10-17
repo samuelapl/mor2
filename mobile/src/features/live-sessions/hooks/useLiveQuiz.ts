@@ -34,9 +34,19 @@ interface LearnerAnswers {
 
 const EMPTY_ROOM: RoomQuizState = { activeQuiz: null, reveals: {}, dismissed: false };
 
+export function quizGroupKeyOf(quiz: LiveQuizPayload | null): string {
+  if (!quiz) return '';
+  return (
+    quiz.quizId ||
+    (quiz.quizTitle ? quiz.quizTitle : undefined) ||
+    quiz.allQuestions?.[0]?.id ||
+    quiz.id
+  );
+}
+
 const roomKey = (sessionId: string) => `live-quiz:${sessionId}`;
 const answersKey = (sessionId: string, quiz: LiveQuizPayload) =>
-  `live-quiz-answers:${sessionId}:${quiz.quizTitle ? `${quiz.quizTitle}_${quiz.id}` : quiz.id}`;
+  `live-quiz-answers:${sessionId}:${quizGroupKeyOf(quiz)}`;
 
 /** Folds a reveal (and its per-question `allReveals`) into the reveals map. */
 function withReveal(
@@ -219,6 +229,8 @@ export function useLiveQuiz({ sessionId, userId, userName, broadcast }: UseLiveQ
       enqueueLiveQuizResponse({
         sessionId,
         questionId: q.id,
+        quizId: quiz.quizId,
+        quizTitle: quiz.quizTitle,
         selectedOptionIds: selected,
         responseDurationSeconds: elapsed,
         questionTitle: q.titleEn,

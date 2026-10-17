@@ -35,4 +35,14 @@ export class SubmitLiveQuizDto {
   @IsOptional()
   @IsNumber()
   points?: number;
+
+  @ApiProperty({ description: 'Quiz ID if part of a prepared or named quiz', required: false })
+  @IsOptional()
+  @IsString()
+  quizId?: string;
+
+  @ApiProperty({ description: 'Quiz title if part of a named quiz or batch', required: false })
+  @IsOptional()
+  @IsString()
+  quizTitle?: string;
 }

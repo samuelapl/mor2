@@ -17,6 +17,8 @@ export interface LiveQuizResponsePayload {
   questionTitle?: string;
   options?: string[];
   correctAnswer?: string;
+  quizId?: string;
+  quizTitle?: string;
 }
 
 let registered = false;

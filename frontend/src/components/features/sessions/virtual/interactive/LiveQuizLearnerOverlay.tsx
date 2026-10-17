@@ -111,10 +111,15 @@ function LiveQuizLearnerOverlayContent({
   }, [quiz, quizHistory]);
 
   // Current question index being viewed by learner
-  const [viewingIndex, setViewingIndex] = useState<number>(0);
+  const [viewingIndex, setViewingIndex] = useState<number>(() => quiz?.questionIndex ?? 0);
 
   // Scope storage to this specific quiz pack / broadcast session so different quizzes stay isolated
-  const quizBroadcastKey = quiz ? (quiz.quizTitle ? `${quiz.quizTitle}_${quiz.id}` : quiz.id) : '';
+  const quizBroadcastKey =
+    quiz?.quizId ||
+    (quiz?.quizTitle ? quiz.quizTitle : undefined) ||
+    quiz?.allQuestions?.[0]?.id ||
+    quiz?.id ||
+    '';
   const learnerStorageKey =
     sessionId && userId && quizBroadcastKey
       ? `live_quiz_learner_answers_${sessionId}_${userId}_${quizBroadcastKey}`
@@ -151,13 +156,13 @@ function LiveQuizLearnerOverlayContent({
     return false;
   });
 
-  // Track quiz ID to guarantee completely fresh state when a new quiz is broadcasted
-  const lastQuizIdRef = useRef<string | null>(quiz?.id || null);
+  // Track quiz broadcast group to guarantee completely fresh state ONLY when a genuinely new quiz is broadcasted
+  const lastQuizBroadcastKeyRef = useRef<string | null>(quizBroadcastKey || null);
 
   useEffect(() => {
-    if (quiz?.id && quiz.id !== lastQuizIdRef.current) {
-      lastQuizIdRef.current = quiz.id;
-      setViewingIndex(0);
+    if (quizBroadcastKey && quizBroadcastKey !== lastQuizBroadcastKeyRef.current) {
+      lastQuizBroadcastKeyRef.current = quizBroadcastKey;
+      setViewingIndex(quiz?.questionIndex ?? 0);
       let restoredAnswers = {};
       let restoredSubmitted = false;
       if (typeof window !== 'undefined' && learnerStorageKey) {
@@ -173,7 +178,14 @@ function LiveQuizLearnerOverlayContent({
       setAnswersMap(restoredAnswers);
       setIsQuizSubmitted(restoredSubmitted);
     }
-  }, [quiz?.id, learnerStorageKey]);
+  }, [quizBroadcastKey, learnerStorageKey, quiz?.questionIndex]);
+
+  // When question index updates within the current quiz broadcast, align viewing index
+  useEffect(() => {
+    if (quiz?.questionIndex !== undefined && quiz.questionIndex >= 0) {
+      setViewingIndex(quiz.questionIndex);
+    }
+  }, [quiz?.id, quiz?.questionIndex]);
 
   const safeIndex = Math.min(Math.max(0, viewingIndex), Math.max(0, allQuestions.length - 1));
   const currentQuestion = allQuestions[safeIndex] || quiz;
@@ -361,6 +373,8 @@ function LiveQuizLearnerOverlayContent({
 
       submitLiveSessionQuizResponse(sessionId, {
         questionId: q.id,
+        quizId: quiz?.quizId,
+        quizTitle: quiz?.quizTitle,
         selectedOptionIds: selectedOpts || [],
         responseDurationSeconds: elapsed,
         questionTitle: q.titleEn,

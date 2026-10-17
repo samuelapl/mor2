@@ -61,6 +61,14 @@
     "apiUrl": "API URL",
     "language": "Language"
   },
+  "landing": {
+    "badge": "Unified National Tax & Customs Training Platform",
+    "titlePrefix": "MoR ",
+    "titleHighlight": "eLearning",
+    "titleSuffix": " Management System",
+    "subtitle": "A single, standardized infrastructure bridging regional branches, customs checkpoints, and headquarters with continuous accreditation and role-based training.",
+    "signInToPlatform": "Sign In to Platform"
+  },
   "auth": {
     "welcome": "Welcome back",
     "signInSubtitle": "Sign in to continue learning",
